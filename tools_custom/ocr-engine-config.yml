@@ -1,0 +1,13 @@
+#Please adjust these values
+linking_gen_script: path/to/linking_gen.py
+dataset_divider_script: path/to/gen_ocr_train_val_test.py
+trainer_script: path/to/train.py
+export_model_script: path/to/export_model.py
+predict_script: path/to/predict_kie_token_ser_re.py
+predict_ser_script: path/to/predict_kie_token_ser.py
+infer_script: path/to/infer_kie_token_ser_re.py
+infer_ser_script: path/to/infer_kie_token_ser.py
+rec_gt_gen_script: path/to/gen_rec_gt.py
+visual_font: path/to/fonts/simfang.ttf
+algorithm_ser: algorithm_ser.yml
+algorithm_re: algorithm_re.yml

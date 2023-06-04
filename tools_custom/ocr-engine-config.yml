@@ -9,5 +9,7 @@ infer_script: path/to/infer_kie_token_ser_re.py
 infer_ser_script: path/to/infer_kie_token_ser.py
 rec_gt_gen_script: path/to/gen_rec_gt.py
 visual_font: path/to/fonts/simfang.ttf
+
+#Don't Change These:
 algorithm_ser: algorithm_ser.yml
 algorithm_re: algorithm_re.yml

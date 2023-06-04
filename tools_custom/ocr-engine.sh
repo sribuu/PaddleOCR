@@ -5,7 +5,7 @@ where:
     --config ocr engine config file.yml
     --help show this help text
     --train Start Training. [SER, RE] or ALL to start training both sequentially
-    --trainResume Resume Training. [SER, RE]
+    --trainResume Resume Training. [SER, RE]. If you have any changes on dataset, please retraining instead.
     --predict Start Prediction. 
     --useCPU Use this param to disable GPU and use CPU Instead. 
     --predictInfer Start Prediction using Raw/Checkpoint Model." 

@@ -24,7 +24,7 @@ def rename_files(data_file):
         base_name = get_base_name(file_name)
 
         if base_name != prev_base_name:
-            random_string = str(uuid.uuid4().hex)[:5]  # Generate new random string
+            random_string = str(uuid.uuid4().hex)[:10]  # Generate new random string
 
         prev_base_name = base_name
 

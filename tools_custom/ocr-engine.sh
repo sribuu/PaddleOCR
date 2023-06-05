@@ -24,12 +24,12 @@ while [[ $# -gt 0 ]]
 do
   key="$1"
   case $key in
-    --config) file="$2" shift ;;
-    --train) train="$2" predict="false" train_resume="";;
+    --config) file="$2" shift;;
+    --train) train="$2" predict="false" train_resume=""  shift;;
     --useCPU) use_gpu="False";;
-    --trainResume) train_resume="$2" train="" predict="false";;
-    --predict) predict="true" train=""  train_resume="" predict_file="$2";;
-    --predictInfer) predict="true" train="" predict_infer="true" train_resume="" predict_file="$2";;
+    --trainResume) train_resume="$2" train="" predict="false"  shift;;
+    --predict) predict="true" train=""  train_resume="" predict_file="$2" shift;;
+    --predictInfer) predict="true" train="" predict_infer="true" train_resume="" predict_file="$2" shift;;
     --help) echo "$usage"
           exit 0 ;;
     \?)  echo "Invalid option: $key" >&2; exit 1;;

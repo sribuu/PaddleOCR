@@ -15,6 +15,7 @@ def rename_files(data_file):
     prev_base_name = ""
     random_string = str(uuid.uuid4().hex)[:5]  # Generate initial random string
 
+    new_lines = []
     for i, line in enumerate(lines):
         line = line.strip()
         file_path, data = line.split('\t')
@@ -38,12 +39,12 @@ def rename_files(data_file):
     
         new_file_path = os.path.join(file_dir, new_file_name)
         new_line = f"{new_file_path}\t{data}\n"
-        os.rename(file_path, new_file_path)
-
-        lines[i] = new_line
+        if os.path.exists(file_path):
+            os.rename(file_path, new_file_path)
+            new_lines.append(new_line)
 
     with open(data_file, 'w') as file:
-        file.writelines(lines)
+        file.writelines(new_lines)
 
 # Contoh penggunaan:
 data_file = "Label.txt"

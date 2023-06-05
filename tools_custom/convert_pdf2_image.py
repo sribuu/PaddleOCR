@@ -15,10 +15,10 @@ parser.add_argument("--destDir", type=str, required=True, help="Destination dire
 args = parser.parse_args()
 
 # Path to folder containing PDF files
-pdf_folder = sourceDir
+pdf_folder = args.sourceDir
 
 # Path to output folder for PNG images
-png_folder = destDir
+png_folder = args.destDir
 
 PIL.Image.MAX_IMAGE_PIXELS = None
 # Initialize PaddleOCR

@@ -18,7 +18,7 @@ file = args.config if args.config else "ocr-engine-config.yml"
 train = args.train
 train_resume = args.trainResume
 predict = "true" if args.predict or args.predictInfer else None
-predict_infer = args.predictInfer
+predict_infer = args.predictInfer if args.predictInfer else "false"
 predict_file = args.predict if args.predict else args.predictInfer
 use_gpu = not args.useCPU
 

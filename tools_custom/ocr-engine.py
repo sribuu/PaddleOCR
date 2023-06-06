@@ -2,6 +2,7 @@ import argparse
 import os
 import subprocess
 import re
+import sys
 
 # Create argument parser
 parser = argparse.ArgumentParser(description="Script to simplify OCR Engine")
@@ -74,110 +75,120 @@ for line in lines:
     elif key == "visual_font":
         visual_font = value
 
-# Prepare anything and do training
-if train:
-    print("== TRAINING ==")
-    print(f"== Generating id and linking for dataset label based on {linking_file}")
-    subprocess.run(["python3", linking_gen_script, "--linkingFile", "label-key-list-pair.txt", "--labelFile", "Label.txt", "--labelOutputFile", "Label-linked.txt"])
+try:
+    # Prepare anything and do training
+    if train:
+        print("== TRAINING ==")
+        print(f"== Generating id and linking for dataset label based on {linking_file}")
+        subprocess.run(["python3", linking_gen_script, "--linkingFile", "label-key-list-pair.txt", "--labelFile", "Label.txt", "--labelOutputFile", "Label-linked.txt"])
 
-    print("== Generate Rec Cropped Img")
-    subprocess.run(["python3", rec_gt_gen_script, "--outputFileGT", "rec_gt.txt", "--labelFile", "Label.txt", "--outputFileDir", "crop_img/"])
+        print("== Generate Rec Cropped Img")
+        subprocess.run(["python3", rec_gt_gen_script, "--outputFileGT", "rec_gt.txt", "--labelFile", "Label.txt", "--outputFileDir", "crop_img/"])
 
-    print("== Splitting dataset with ratio 6:2:2")
-    subprocess.run(["python3", dataset_divider_script, "--trainValTestRatio", "6:2:2", "--datasetRootPath", "", "--detLabelFileName", "Label-linked.txt", "--recLabelFileName", "rec_gt.txt", "--recImageDirName", "crop_img", "--detRootPath", "./train_data/det", "--recRootPath", "./train_data/rec"])
+        print("== Splitting dataset with ratio 6:2:2")
+        subprocess.run(["python3", dataset_divider_script, "--trainValTestRatio", "6:2:2", "--datasetRootPath", "", "--detLabelFileName", "Label-linked.txt", "--recLabelFileName", "rec_gt.txt", "--recImageDirName", "crop_img", "--detRootPath", "./train_data/det", "--recRootPath", "./train_data/rec"])
 
-    # Count num classes
-    with open("label-key-list.txt", 'r') as f:
-        num_count = len([line for line in f if line.strip()])
+        # Count num classes
+        with open("label-key-list.txt", 'r') as f:
+            num_count = len([line for line in f if line.strip()])
 
-    num_classes = (2 * num_count) - 1
-    print(f"== Update num_classes to {num_classes}")
+        num_classes = (2 * num_count) - 1
+        print(f"== Update num_classes to {num_classes}")
 
-    with open(algorithm_ser, 'r+') as f:
-        content = f.read()
-        new_content = re.sub(r'&num_classes.*', f'&num_classes {num_classes}', content)
-        f.seek(0)
-        f.write(new_content)
-        f.truncate()
-        
-    if train == "SER" or train == "ALL":
-        print("== Training SER Model")
-        subprocess.run(["python3", trainer_script, "-c", algorithm_ser, "-o", "Global.save_model_dir=./model_checkpoint/ser/", f"Global.use_gpu={use_gpu}"])
+        with open(algorithm_ser, 'r+') as f:
+            content = f.read()
+            new_content = re.sub(r'&num_classes.*', f'&num_classes {num_classes}', content)
+            f.seek(0)
+            f.write(new_content)
+            f.truncate()
+            
+        if train == "SER" or train == "ALL":
+            print("== Training SER Model")
+            try:
+                subprocess.run(["python3", trainer_script, "-c", algorithm_ser, "-o", "Global.save_model_dir=./model_checkpoint/ser/", f"Global.use_gpu={use_gpu}"], check=True)
+            except subprocess.CalledProcessError as e:
+                print("Error running predict script:", e)
+                exit(1)
 
-        print("== Export SER Model to Inference")
-        subprocess.run(["python3", export_model_script, "-c", algorithm_ser, "-o", "Architecture.Backbone.checkpoints=./model_checkpoint/ser/best_accuracy", f"Global.use_gpu={use_gpu}"])
+            print("== Export SER Model to Inference")
+            subprocess.run(["python3", export_model_script, "-c", algorithm_ser, "-o", "Architecture.Backbone.checkpoints=./model_checkpoint/ser/best_accuracy", f"Global.use_gpu={use_gpu}"])
 
-    if train == "RE" or train == "ALL":
-        print("== Training RE Model")
-        subprocess.run(["python3", trainer_script, "-c", algorithm_re, "-o", "Global.save_model_dir=./model_checkpoint/re/", f"Global.use_gpu={use_gpu}"])
+        if train == "RE" or train == "ALL":
+            print("== Training RE Model")
+            subprocess.run(["python3", trainer_script, "-c", algorithm_re, "-o", "Global.save_model_dir=./model_checkpoint/re/", f"Global.use_gpu={use_gpu}"])
 
-        print("== Export RE Model to Inference")
-        subprocess.run(["python3", export_model_script, "-c", algorithm_re, "-o", "Architecture.Backbone.checkpoints=./model_checkpoint/re/best_accuracy", f"Global.use_gpu={use_gpu}"])
+            print("== Export RE Model to Inference")
+            subprocess.run(["python3", export_model_script, "-c", algorithm_re, "-o", "Architecture.Backbone.checkpoints=./model_checkpoint/re/best_accuracy", f"Global.use_gpu={use_gpu}"])
 
-elif predict == "true":
-    if not predict_file:
-        print("Error: The file to predict is required")
-        exit(1)
+    elif predict == "true":
+        if not predict_file:
+            print("Error: The file to predict is required")
+            exit(1)
 
-    if predict_infer == "false":
-        if os.path.isdir(model_compiled_re) and os.path.isdir(model_compiled_ser):
-            subprocess.run([
-                "python3",
-                predict_script,
-                "--kie_algorithm=LayoutXLM",
-                f"--re_model_dir={model_compiled_re}",
-                f"--ser_model_dir={model_compiled_ser}",
-                "--use_visual_backbone=False",
-                f"--image_dir={predict_file}",
-                "--ser_dict_path=label-key-list.txt",
-                "--vis_font_path=visual_font",
-                "--ocr_order_method=tb-yx"
-            ])
+        if predict_infer == "false":
+            if os.path.isdir(model_compiled_re) and os.path.isdir(model_compiled_ser):
+                subprocess.run([
+                    "python3",
+                    predict_script,
+                    "--kie_algorithm=LayoutXLM",
+                    f"--re_model_dir={model_compiled_re}",
+                    f"--ser_model_dir={model_compiled_ser}",
+                    "--use_visual_backbone=False",
+                    f"--image_dir={predict_file}",
+                    "--ser_dict_path=label-key-list.txt",
+                    "--vis_font_path=visual_font",
+                    "--ocr_order_method=tb-yx"
+                ])
+            else:
+                subprocess.run([
+                    "python3",
+                    predict_ser_script,
+                    "--kie_algorithm=LayoutXLM",
+                    f"--ser_model_dir={model_compiled_re}",
+                    "--use_visual_backbone=False",
+                    f"--image_dir={predict_file}",
+                    "--ser_dict_path=label-key-list.txt",
+                    "--vis_font_path=visual_font",
+                    "--ocr_order_method=tb-yx"
+                ])
         else:
-            subprocess.run([
-                "python3",
-                predict_ser_script,
-                "--kie_algorithm=LayoutXLM",
-                f"--ser_model_dir={model_compiled_re}",
-                "--use_visual_backbone=False",
-                f"--image_dir={predict_file}",
-                "--ser_dict_path=label-key-list.txt",
-                "--vis_font_path=visual_font",
-                "--ocr_order_method=tb-yx"
-            ])
-    else:
-        if os.path.isdir(model_checkpoint_re) and os.path.isdir(model_checkpoint_ser):
-            subprocess.run([
-                "python3",
-                infer_script,
-                "-c", algorithm_re,
-                "-o", f"Architecture.Backbone.checkpoints={model_checkpoint_re}",
-                f"Global.infer_img={predict_file}",
-                "Global.infer_mode=True",
-                f"Global.use_gpu={use_gpu}",
-                "-c_ser", algorithm_ser,
-                "-o_ser", f"Architecture.Backbone.checkpoints={model_checkpoint_ser}"
-            ])
+            if os.path.isdir(model_checkpoint_re) and os.path.isdir(model_checkpoint_ser):
+                subprocess.run([
+                    "python3",
+                    infer_script,
+                    "-c", algorithm_re,
+                    "-o", f"Architecture.Backbone.checkpoints={model_checkpoint_re}",
+                    f"Global.infer_img={predict_file}",
+                    "Global.infer_mode=True",
+                    f"Global.use_gpu={use_gpu}",
+                    "-c_ser", algorithm_ser,
+                    "-o_ser", f"Architecture.Backbone.checkpoints={model_checkpoint_ser}"
+                ])
+            else:
+                subprocess.run([
+                    "python3",
+                    infer_ser_script,
+                    "-c", algorithm_ser,
+                    "-o", f"Architecture.Backbone.checkpoints={model_checkpoint_ser}",
+                    f"Global.infer_img={predict_file}",
+                    "Global.infer_mode=True",
+                    f"Global.use_gpu={use_gpu}"
+                ])
+    elif train_resume:
+        if train_resume == "SER":
+            print("== Training SER Model")
+            subprocess.run(["python3", trainer_script, "-c", "algorithm_ser.yml", "-o", f"Architecture.Backbone.checkpoints={model_checkpoint_ser}", f"Global.use_gpu={use_gpu}"])
+        elif train_resume == "RE":
+            print("== Training RE Model")
+            subprocess.run(["python3", trainer_script, "-c", "algorithm_re.yml", "-o", f"Architecture.Backbone.checkpoints={model_checkpoint_re}", f"Global.use_gpu={use_gpu}"])
         else:
-            subprocess.run([
-                "python3",
-                infer_ser_script,
-                "-c", algorithm_ser,
-                "-o", f"Architecture.Backbone.checkpoints={model_checkpoint_ser}",
-                f"Global.infer_img={predict_file}",
-                "Global.infer_mode=True",
-                f"Global.use_gpu={use_gpu}"
-            ])
-elif train_resume:
-    if train_resume == "SER":
-        print("== Training SER Model")
-        subprocess.run(["python3", trainer_script, "-c", "algorithm_ser.yml", "-o", f"Architecture.Backbone.checkpoints={model_checkpoint_ser}", f"Global.use_gpu={use_gpu}"])
-    elif train_resume == "RE":
-        print("== Training RE Model")
-        subprocess.run(["python3", trainer_script, "-c", "algorithm_re.yml", "-o", f"Architecture.Backbone.checkpoints={model_checkpoint_re}", f"Global.use_gpu={use_gpu}"])
+            print("Error: Wrong argument, Choose SER or RE.")
+            exit(1)
     else:
-        print("Error: Wrong argument, Choose SER or RE.")
+        print("Error: Argument is missing.")
         exit(1)
-else:
-    print("Error: Argument is missing.")
-    exit(1)
+except subprocess.CalledProcessError as e:
+    # Menangani kesalahan yang terjadi pada subprocess
+    print("Error executing subprocess:", e)
+    sys.exit(1)
+    

@@ -22,18 +22,6 @@ predict_infer = args.predictInfer if args.predictInfer else "false"
 predict_file = args.predict if args.predict else args.predictInfer
 use_gpu = not args.useCPU
 
-if use_gpu:
-    cuda_available = False
-    if 'CUDA_VISIBLE_DEVICES' in os.environ:
-        cuda_devices = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
-        if len(cuda_devices) > 0 and cuda_devices[0] != '':
-            cuda_available = True
-
-    if cuda_available:
-        print("GPU dengan CUDA tersedia")
-    else:
-        use_gpu = False
-
 # Get required path and files
 linking_gen_script = ""
 dataset_divider_script = ""

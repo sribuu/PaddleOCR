@@ -22,6 +22,18 @@ predict_infer = args.predictInfer if args.predictInfer else "false"
 predict_file = args.predict if args.predict else args.predictInfer
 use_gpu = not args.useCPU
 
+if use_gpu:
+    cuda_available = False
+    if 'CUDA_VISIBLE_DEVICES' in os.environ:
+        cuda_devices = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
+        if len(cuda_devices) > 0 and cuda_devices[0] != '':
+            cuda_available = True
+
+    if cuda_available:
+        print("GPU dengan CUDA tersedia")
+    else:
+        use_gpu = False
+
 # Get required path and files
 linking_gen_script = ""
 dataset_divider_script = ""
@@ -66,10 +78,10 @@ for line in lines:
         linking_file = value
     elif key == "export_model_script":
         export_model_script = value
-    elif key == "algorithm_ser":
-        algorithm_ser = value
-    elif key == "algorithm_re":
-        algorithm_re = value
+    # elif key == "algorithm_ser":
+    #     algorithm_ser = value
+    # elif key == "algorithm_re":
+    #     algorithm_re = value
     elif key == "rec_gt_gen_script":
         rec_gt_gen_script = value
     elif key == "visual_font":
@@ -111,19 +123,21 @@ try:
                 exit(1)
 
             print("== Export SER Model to Inference")
-            subprocess.run(["python3", export_model_script, "-c", algorithm_ser, "-o", "Architecture.Backbone.checkpoints=./model_checkpoint/ser/best_accuracy", f"Global.use_gpu={use_gpu}"])
+            subprocess.run(["python3", export_model_script, "-c", algorithm_ser, "-o", f"Architecture.Backbone.checkpoints={model_checkpoint_ser}", f"Global.use_gpu={use_gpu}"])
 
         if train == "RE" or train == "ALL":
             print("== Training RE Model")
             subprocess.run(["python3", trainer_script, "-c", algorithm_re, "-o", "Global.save_model_dir=./model_checkpoint/re/", f"Global.use_gpu={use_gpu}"])
 
             print("== Export RE Model to Inference")
-            subprocess.run(["python3", export_model_script, "-c", algorithm_re, "-o", "Architecture.Backbone.checkpoints=./model_checkpoint/re/best_accuracy", f"Global.use_gpu={use_gpu}"])
+            subprocess.run(["python3", export_model_script, "-c", algorithm_re, "-o", f"Architecture.Backbone.checkpoints={model_checkpoint_re}", f"Global.use_gpu={use_gpu}"])
 
     elif predict == "true":
         if not predict_file:
             print("Error: The file to predict is required")
             exit(1)
+        
+        output_predict_dir = os.path.join("output",os.path.basename(predict_file))
 
         if predict_infer == "false":
             if os.path.isdir(model_compiled_re) and os.path.isdir(model_compiled_ser):
@@ -135,8 +149,9 @@ try:
                     f"--ser_model_dir={model_compiled_ser}",
                     "--use_visual_backbone=False",
                     f"--image_dir={predict_file}",
+                    f"--output={output_predict_dir}",
                     "--ser_dict_path=label-key-list.txt",
-                    "--vis_font_path=visual_font",
+                    f"--vis_font_path={visual_font}",
                     "--ocr_order_method=tb-yx"
                 ])
             else:
@@ -144,11 +159,12 @@ try:
                     "python3",
                     predict_ser_script,
                     "--kie_algorithm=LayoutXLM",
-                    f"--ser_model_dir={model_compiled_re}",
+                    f"--ser_model_dir={model_compiled_ser}",
                     "--use_visual_backbone=False",
                     f"--image_dir={predict_file}",
+                    f"--output={output_predict_dir}",
                     "--ser_dict_path=label-key-list.txt",
-                    "--vis_font_path=visual_font",
+                    f"--vis_font_path={visual_font}",
                     "--ocr_order_method=tb-yx"
                 ])
         else:
@@ -177,10 +193,10 @@ try:
     elif train_resume:
         if train_resume == "SER":
             print("== Training SER Model")
-            subprocess.run(["python3", trainer_script, "-c", "algorithm_ser.yml", "-o", f"Architecture.Backbone.checkpoints={model_checkpoint_ser}", f"Global.use_gpu={use_gpu}"])
+            subprocess.run(["python3", trainer_script, "-c", algorithm_ser, "-o", f"Architecture.Backbone.checkpoints={model_checkpoint_ser}", f"Global.use_gpu={use_gpu}"])
         elif train_resume == "RE":
             print("== Training RE Model")
-            subprocess.run(["python3", trainer_script, "-c", "algorithm_re.yml", "-o", f"Architecture.Backbone.checkpoints={model_checkpoint_re}", f"Global.use_gpu={use_gpu}"])
+            subprocess.run(["python3", trainer_script, "-c", algorithm_re, "-o", f"Architecture.Backbone.checkpoints={model_checkpoint_re}", f"Global.use_gpu={use_gpu}"])
         else:
             print("Error: Wrong argument, Choose SER or RE.")
             exit(1)

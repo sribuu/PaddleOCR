@@ -54,7 +54,9 @@ with open(filename) as fh:
                 temp_data["id"] = _id  # assign id
                 temp_data["linking"] = []  # default value is empty list
                 if "key_cls" in temp_data: #rename key_cls to label if needed
-                    temp_data["label"] = temp_data.pop("key_cls")
+                    temp_data["label"] = (temp_data.pop("key_cls")).upper()
+                else:
+                    temp_data["label"] = (temp_data["label"]).upper()
                 temp[i] = temp_data  # modify current data on temp
 
 

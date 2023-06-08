@@ -101,13 +101,30 @@ try:
             f.seek(0)
             f.write(new_content)
             f.truncate()
-            
+        
+        # Update Entity labels for RE
+        data_dict = {}
+        with open('label-key-list.txt', 'r') as file:
+            lines = file.readlines()
+
+        for index, line in enumerate(lines):
+            line = line.strip()
+            data_dict[line] = index
+        
+        with open(algorithm_re, 'r+') as f:
+            content = f.read()
+            new_content = re.sub(r'&entities_labels.*', f'&entities_labels {data_dict}', content)
+            f.seek(0)
+            f.write(new_content)
+            f.truncate()
+
+
         if train == "SER" or train == "ALL":
             print("== Training SER Model")
             try:
-                subprocess.run(["python3", trainer_script, "-c", algorithm_ser, "-o", "Global.save_model_dir=./model_checkpoint/ser/", f"Global.use_gpu={use_gpu}"], check=True)
+                subprocess.run(["python3", trainer_script, "-c", algorithm_ser, "-o", f"Global.use_gpu={use_gpu}"], check=True)
             except subprocess.CalledProcessError as e:
-                print("Error running predict script:", e)
+                print("Error Training SER Model:", e)
                 exit(1)
 
             print("== Export SER Model to Inference")
@@ -115,7 +132,11 @@ try:
 
         if train == "RE" or train == "ALL":
             print("== Training RE Model")
-            subprocess.run(["python3", trainer_script, "-c", algorithm_re, "-o", "Global.save_model_dir=./model_checkpoint/re/", f"Global.use_gpu={use_gpu}"])
+            try:
+                subprocess.run(["python3", trainer_script, "-c", algorithm_re, "-o", f"Global.use_gpu={use_gpu}"], check=True)
+            except subprocess.CalledProcessError as e:
+                print("Error Training RE Model:", e)
+                exit(1)
 
             print("== Export RE Model to Inference")
             subprocess.run(["python3", export_model_script, "-c", algorithm_re, "-o", f"Architecture.Backbone.checkpoints={model_checkpoint_re}", f"Global.use_gpu={use_gpu}"])

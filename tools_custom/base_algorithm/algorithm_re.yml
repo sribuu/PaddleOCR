@@ -77,6 +77,7 @@ Train:
           return_attention_mask: True
       - VQAReTokenRelation:
       - VQAReTokenChunk:
+          entities_labels: &entities_labels #put custom
           max_seq_len: *max_seq_len
       - TensorizeEntitiesRelations:
       - Resize:
@@ -116,6 +117,7 @@ Eval:
           return_attention_mask: True
       - VQAReTokenRelation:
       - VQAReTokenChunk:
+          entities_labels: *entities_labels
           max_seq_len: *max_seq_len
       - TensorizeEntitiesRelations:
       - Resize:

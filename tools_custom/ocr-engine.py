@@ -79,6 +79,16 @@ try:
     # Prepare anything and do training
     if train:
         print("== TRAINING ==")
+
+        #Update label list
+        with open("label-key-list.txt", "r") as file:
+            lines = file.readlines()
+
+        result = [line.strip().upper() for line in lines]
+
+        with open("label-key-list.txt", "w") as file:
+            file.write("\n".join(result))
+
         print(f"== Generating id and linking for dataset label based on {linking_file}")
         subprocess.run(["python3", linking_gen_script, "--linkingFile", "label-key-list-pair.txt", "--labelFile", "Label.txt", "--labelOutputFile", "Label-linked.txt"])
 
@@ -88,9 +98,17 @@ try:
         print("== Splitting dataset with ratio 6:2:2")
         subprocess.run(["python3", dataset_divider_script, "--trainValTestRatio", "6:2:2", "--datasetRootPath", "", "--detLabelFileName", "Label-linked.txt", "--recLabelFileName", "rec_gt.txt", "--recImageDirName", "crop_img", "--detRootPath", "./train_data/det", "--recRootPath", "./train_data/rec"])
 
-        # Count num classes
+        # Update Entity labels for RE
+        data_dict = {}
+        num_count = 0
+
         with open("label-key-list.txt", 'r') as f:
-            num_count = len([line for line in f if line.strip()])
+            lines = f.readlines()
+            for index, line in enumerate(lines):
+                line = line.strip()
+                if line:
+                    data_dict[line] = index
+                    num_count += 1
 
         num_classes = (2 * num_count) - 1
         print(f"== Update num_classes to {num_classes}")
@@ -102,15 +120,6 @@ try:
             f.write(new_content)
             f.truncate()
         
-        # Update Entity labels for RE
-        data_dict = {}
-        with open('label-key-list.txt', 'r') as file:
-            lines = file.readlines()
-
-        for index, line in enumerate(lines):
-            line = line.strip()
-            data_dict[line] = index
-        
         with open(algorithm_re, 'r+') as f:
             content = f.read()
             new_content = re.sub(r'&entities_labels.*', f'&entities_labels {data_dict}', content)
@@ -118,6 +127,7 @@ try:
             f.write(new_content)
             f.truncate()
 
+            
 
         if train == "SER" or train == "ALL":
             print("== Training SER Model")

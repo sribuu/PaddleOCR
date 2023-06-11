@@ -57,6 +57,9 @@ with open(filename) as fh:
                     temp_data["label"] = (temp_data.pop("key_cls"))
                 else:
                     temp_data["label"] = (temp_data["label"])
+                
+                if temp_data["label"] == "None":
+                        temp_data["label"] = "IGNORE"
                 temp[i] = temp_data  # modify current data on temp
 
 

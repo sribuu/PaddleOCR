@@ -63,22 +63,22 @@ with open(filename) as fh:
                 temp[i] = temp_data  # modify current data on temp
 
 
-            for i in range(len(temp)):
-                temp_data = temp[i]
+            # for i in range(len(temp)):
+            #     temp_data = temp[i]
 
-                label = temp_data["label"]  # get label
+            #     label = temp_data["label"]  # get label
 
-                value_link = next((item for item in _links if item["value"] == label), None)
+            #     value_link = next((item for item in _links if item["value"] == label), None)
                 
-                if(value_link is not None) : 
-                    index = next((index for index, item in enumerate(temp) if item["label"] == value_link["key"]), -1)
-                    key_data = temp[index]
+            #     if(value_link is not None) : 
+            #         index = next((index for index, item in enumerate(temp) if item["label"] == value_link["key"]), -1)
+            #         key_data = temp[index]
                     
-                    if(index > -1 and key_data["label"] == value_link["key"]):
-                        temp[index]["linking"].append([key_data["id"], temp_data["id"]])
-                        temp_data["linking"].append([key_data["id"], temp_data["id"]])
+            #         if(index > -1 and key_data["label"] == value_link["key"]):
+            #             temp[index]["linking"].append([key_data["id"], temp_data["id"]])
+            #             temp_data["linking"].append([key_data["id"], temp_data["id"]])
 
-                temp[i] = temp_data  # modify current data on temp
+            #     temp[i] = temp_data  # modify current data on temp
 
             _dict[key] = json.dumps(temp)  # putting back into _dict
 

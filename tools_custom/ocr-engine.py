@@ -84,24 +84,8 @@ class SribuuOCRTrainer(object):
             Method to unpack the *.yml file which contains absolute path to the utilities file.
             Put the keys, values in dictionary 
         '''
-        #FIXME: Any way to avoid this shenanigans pathways because the code is not robust! Have to think about it
-        
-        #Read the YAML file and retrieve the key-value pairs
-        self.training_config = {}
-
-        with open(self.fn_config, 'r') as f:
-            lines = f.readlines()
-
-        for line in lines:
-            key, value = map(str.strip, line.split(':', 1))
-            self.training_config[key]=value
-
-        #Extra keys, predefined values
-        self.training_config['model_compiled_re'] = "%s/model_compiled/re"%(self.model_dir)
-        self.training_config['model_compiled_ser'] = "%s/model_compiled/ser"%(self.model_dir)
-        self.training_config['model_checkpoint_re'] = "%s/model_checkpoint/re/best_accuracy"%(self.model_dir)
-        self.training_config['model_checkpoint_ser'] = "%s/model_checkpoint/ser/best_accuracy"%(self.model_dir)
-
+        pass
+    
     def link_file(self):
         #Join the self.model_dir with *.txt
         self.linking_file = "%s/label-key-list-pair.txt"%(self.model_dir)
@@ -137,26 +121,15 @@ class SribuuOCRTrainer(object):
                         _id = i + 1  # starting from 1
                         temp_data["id"] = _id  # assign id
                         temp_data["linking"] = []  # default value is empty list
+
                         if "key_cls" in temp_data: #rename key_cls to label if needed
                             temp_data["label"] = temp_data.pop("key_cls")
-                        temp[i] = temp_data  # modify current data on temp
-    
-    
-                    for i in range(len(temp)):
-                        temp_data = temp[i]
-    
-                        label = temp_data["label"]  # get label
-    
-                        value_link = next((item for item in self.linking_links if item["value"] == label), None)
-    
-                        if(value_link is not None) : 
-                            index = next((index for index, item in enumerate(temp) if item["label"] == value_link["key"]), -1)
-                            key_data = temp[index]
-    
-                            if(index > -1 and key_data["label"] == value_link["key"]):
-                                temp[index]["linking"].append([key_data["id"], temp_data["id"]])
-                                temp_data["linking"].append([key_data["id"], temp_data["id"]])
-    
+                        else:
+                            temp_data["label"] = (temp_data["label"])
+                                                
+                        if temp_data["label"] == "None":
+                            temp_data["label"] = "IGNORE"
+
                         temp[i] = temp_data  # modify current data on temp
     
                     self.linking_dict[key] = json.dumps(temp)  # putting back into _dict
@@ -305,16 +278,6 @@ class SribuuOCRTrainer(object):
 
         num_classes = (2 * num_count) - 1
 
-        #Do stuff (What is this step for?)
-        with open(
-            "%s/%s"%(self.model_dir, self.training_config["algorithm_ser"]), 'r+'
-        ) as f:
-            content = f.read()
-            new_content = re.sub(r'&num_classes.*', f'&num_classes {num_classes}', content)
-            f.seek(0)
-            f.write(new_content)
-            f.truncate()
-
         #Updating the number classes
         self.num_classes = (2 * num_count) - 1
         print("== Update num_classes to %s"%(self.num_classes))
@@ -344,10 +307,14 @@ class SribuuOCRTrainer(object):
 
 
 if __name__ == "__main__":
+    #FIXME: Add hyperparams for RE
+    # for _ in 20000 maximise training metric by changing hyperparams
+     
     trainer = SribuuOCRTrainer(
-        model_dir = '/home/philgun/Documents/sribuu/ocr/models/invoice',
+        model_dir = '/home/philgun/Documents/sribuu/ocr/models/re',
         fn_config = '/home/philgun/Documents/sribuu/ocr/paddle-ocr-sribuu/tools_custom/ocr-engine-config.yml',
-        trainResume = None
+        trainResume = None,
+        useCPU = True
     )
 
     #Instantiate dictionary that contains hyperparameters
@@ -362,7 +329,11 @@ if __name__ == "__main__":
     hyperparams["regularizer_name"] = "L2"
     hyperparams["regularizer_factor"] = 0.0
 
-    trainer.fit(model="ALL", hyperparams = hyperparams)
+    #Catch training metric
+    trainer.fit(
+        model="ALL", hyperparams = hyperparams
+    )
+
 
 '''
         #Link the linking file

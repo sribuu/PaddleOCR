@@ -5,7 +5,7 @@ class HyperParameters(object):
             hyperparams, dict, key, values are bunch of stuff I can't remember. Check the class instantiation
     '''
     def __init__(
-            self, model_dir,
+            self, model_dir, global_model = "SER",
 
             profiler_options=None,
             
@@ -22,6 +22,9 @@ class HyperParameters(object):
 
             metric_name='VQASerTokenMetric', metric_main_indicator="hmean"
         ):
+        #FIXME: Add hyperparams for global_model "SER"
+
+
         #Instantiate self.config attribute
         self.config = {}
         self.config["profiler_options"] = profiler_options

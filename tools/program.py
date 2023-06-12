@@ -473,6 +473,8 @@ def train(config,
     logger.info(best_str)
     if dist.get_rank() == 0 and log_writer is not None:
         log_writer.close()
+    
+    #Output & return training metric
     return
 
 

@@ -618,14 +618,19 @@ def get_center(model, eval_dataloader, post_process_class):
         char_center[key] = char_center[key][0]
     return char_center
 
-
-def preprocess(is_train=False):
-    FLAGS = ArgsParser().parse_args()
-    profiler_options = FLAGS.profiler_options
-    config = load_config(FLAGS.config)
-    config = merge_config(config, FLAGS.opt)
-    profile_dic = {"profiler_options": FLAGS.profiler_options}
-    config = merge_config(config, profile_dic)
+#Philipe Gunawan changed this. Instead of relying on *.yml file to control the hyperparameters, I use a Python object "flags_"
+def preprocess(is_train=False, flags_= None):
+    if flags_ ==  None:
+        FLAGS = ArgsParser().parse_args()    
+        profiler_options = FLAGS.profiler_options
+        config = load_config(FLAGS.config)
+        config = merge_config(config, FLAGS.opt)
+        profile_dic = {"profiler_options": FLAGS.profiler_options}
+        config = merge_config(config, profile_dic)
+    else:
+        #Philipe's way. Passing Python object instead of *.yml
+        FLAGS = flags_
+        config = FLAGS.load_config()
 
     if is_train:
         # save_config

@@ -14,7 +14,7 @@ class HyperParameters(object):
             use_visualdl=False, seed=143, infer_img='./train_data/det/test.txt', infer_mode=False, save_res_path='./output/ser',
             kie_rec_model_dir=None, kie_det_model_dir=None, 
             
-            model_type='kie',algorithm='LayoutXLM', Transform=None, architecture_name='LayoutXLMForSer', pretrained=True, checkpoints=None, mode='vi', num_classes=105, 
+            model_type='kie',algorithm='LayoutXLM', Transform=None, architecture_name='LayoutXLMForSer', pretrained=True, checkpoints=None, mode='vi', num_classes=105, loss_reduction="mean",
             
             loss_name='VQASerTokenLayoutLMLoss', key='backbone_out', optimizer_name='AdamW',beta1=0.9,beta2=0.999,lr_name="Linear",learning_rate=5e-5, warmup_epoch=2, regularizer_name="L2", regularizer_factor=0.0,
 
@@ -23,6 +23,8 @@ class HyperParameters(object):
             metric_name='VQASerTokenMetric', metric_main_indicator="hmean"
         ):
         #FIXME: Add hyperparams for global_model "SER"
+
+        self.global_model = global_model
 
 
         #Instantiate self.config attribute
@@ -62,9 +64,14 @@ class HyperParameters(object):
 
         #Populate the Loss key
         self.config["Loss"] = {}
+
         self.config["Loss"]["name"] = loss_name
-        self.config["Loss"]["num_classes"] = num_classes
         self.config["Loss"]["key"] = key
+
+        if self.global_model in ["SER","ALL"]:
+            self.config["Loss"]["num_classes"] = num_classes
+        elif self.global_model == "RE":
+            self.config["Loss"]["reduction"] = loss_reduction
 
         #Populate Optimizer key
         self.config["Optimizer"] = {}
@@ -83,18 +90,30 @@ class HyperParameters(object):
         #Populate PostProcess key
         self.config["PostProcess"] = {}
         self.config["PostProcess"]["name"] = postprocess_name
-        self.config["PostProcess"]["class_path"] = "%s/%s"%(model_dir,postprocess_class_path)
+        
+        if self.global_model in ["SER","ALL"]:
+            self.config["PostProcess"]["class_path"] = "%s/%s"%(model_dir,postprocess_class_path)
 
         #Populate Metric key
         self.config["Metric"] = {}
         self.config["Metric"]["name"] = metric_name
         self.config["Metric"]["main_indicator"] = metric_main_indicator
 
-        #Populate Train key
-        self.config["Train"] = {'dataset': {'name': 'SimpleDataSet', 'data_dir': '%s/train_data/det/train'%(model_dir), 'label_file_list': ['%s/train_data/det/train.txt'%(model_dir)], 'ratio_list': [1.0], 'transforms': [{'DecodeImage': {'img_mode': 'RGB', 'channel_first': False}}, {'VQATokenLabelEncode': {'contains_re': False, 'algorithm': algorithm, 'class_path': '%s/label-key-list.txt'%(model_dir), 'use_textline_bbox_info': True, 'order_method': 'tb-yx'}}, {'VQATokenPad': {'max_seq_len': 512, 'return_attention_mask': True}}, {'VQASerTokenChunk': {'max_seq_len': 512}}, {'Resize': {'size': [224, 224]}}, {'NormalizeImage': {'scale': 1, 'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375], 'order': 'hwc'}}, {'ToCHWImage': None}, {'KeepKeys': {'keep_keys': ['input_ids', 'bbox', 'attention_mask', 'token_type_ids', 'image', 'labels']}}]}, 'loader': {'shuffle': True, 'drop_last': False, 'batch_size_per_card': 8, 'num_workers': 4}}
 
-        #Populate Eval key
-        self.config["Eval"] = {'dataset': {'name': 'SimpleDataSet', 'data_dir': '%s/train_data/det/val'%(model_dir), 'label_file_list': ['%s/train_data/det/val.txt'%(model_dir)], 'transforms': [{'DecodeImage': {'img_mode': 'RGB', 'channel_first': False}}, {'VQATokenLabelEncode': {'contains_re': False, 'algorithm': algorithm, 'class_path': '%s/label-key-list.txt'%(model_dir), 'use_textline_bbox_info': True, 'order_method': 'tb-yx'}}, {'VQATokenPad': {'max_seq_len': 512, 'return_attention_mask': True}}, {'VQASerTokenChunk': {'max_seq_len': 512}}, {'Resize': {'size': [224, 224]}}, {'NormalizeImage': {'scale': 1, 'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375], 'order': 'hwc'}}, {'ToCHWImage': None}, {'KeepKeys': {'keep_keys': ['input_ids', 'bbox', 'attention_mask', 'token_type_ids', 'image', 'labels']}}]}, 'loader': {'shuffle': False, 'drop_last': False, 'batch_size_per_card': 8, 'num_workers': 4}}
+        if self.global_model in ["SER","ALL"]:
+            #Populate Train key
+            self.config["Train"] = {'dataset': {'name': 'SimpleDataSet', 'data_dir': '%s/train_data/det/train'%(model_dir), 'label_file_list': ['%s/train_data/det/train.txt'%(model_dir)], 'ratio_list': [1.0], 'transforms': [{'DecodeImage': {'img_mode': 'RGB', 'channel_first': False}}, {'VQATokenLabelEncode': {'contains_re': False, 'algorithm': algorithm, 'class_path': '%s/label-key-list.txt'%(model_dir), 'use_textline_bbox_info': True, 'order_method': 'tb-yx'}}, {'VQATokenPad': {'max_seq_len': 512, 'return_attention_mask': True}}, {'VQASerTokenChunk': {'max_seq_len': 512}}, {'Resize': {'size': [224, 224]}}, {'NormalizeImage': {'scale': 1, 'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375], 'order': 'hwc'}}, {'ToCHWImage': None}, {'KeepKeys': {'keep_keys': ['input_ids', 'bbox', 'attention_mask', 'token_type_ids', 'image', 'labels']}}]}, 'loader': {'shuffle': True, 'drop_last': False, 'batch_size_per_card': 8, 'num_workers': 4}}
+
+            #Populate Eval key
+            self.config["Eval"] = {'dataset': {'name': 'SimpleDataSet', 'data_dir': '%s/train_data/det/val'%(model_dir), 'label_file_list': ['%s/train_data/det/val.txt'%(model_dir)], 'transforms': [{'DecodeImage': {'img_mode': 'RGB', 'channel_first': False}}, {'VQATokenLabelEncode': {'contains_re': False, 'algorithm': algorithm, 'class_path': '%s/label-key-list.txt'%(model_dir), 'use_textline_bbox_info': True, 'order_method': 'tb-yx'}}, {'VQATokenPad': {'max_seq_len': 512, 'return_attention_mask': True}}, {'VQASerTokenChunk': {'max_seq_len': 512}}, {'Resize': {'size': [224, 224]}}, {'NormalizeImage': {'scale': 1, 'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375], 'order': 'hwc'}}, {'ToCHWImage': None}, {'KeepKeys': {'keep_keys': ['input_ids', 'bbox', 'attention_mask', 'token_type_ids', 'image', 'labels']}}]}, 'loader': {'shuffle': False, 'drop_last': False, 'batch_size_per_card': 8, 'num_workers': 4}}
+
+        else:
+            #Populate Train key
+            self.config["Train"] = {'dataset': {'name': 'SimpleDataSet', 'data_dir': '%s/train_data/det/train'%(model_dir), 'label_file_list': ['%s/train_data/det/train.txt'%(model_dir)], 'ratio_list': [1.0], 'transforms': [{'DecodeImage': {'img_mode': 'RGB', 'channel_first': False}}, {'VQATokenLabelEncode': {'contains_re': True, 'algorithm': algorithm, 'class_path': '%s/label-key-list.txt'%(model_dir), 'use_textline_bbox_info': True, 'order_method': 'tb-yx'}}, {'VQATokenPad': {'max_seq_len': 512, 'return_attention_mask': True}}, {'VQAReTokenRelation':None}, {'VQAReTokenChunk': {'max_seq_len': 512}}, {'TensorizeEntitiesRelations':None}, {'Resize': {'size': [224, 224]}}, {'NormalizeImage': {'scale': 1, 'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375], 'order': 'hwc'}}, {'ToCHWImage': None}, {'KeepKeys': {'keep_keys': ['input_ids', 'bbox', 'attention_mask', 'token_type_ids', 'entities', 'relations']}}]}, 'loader': {'shuffle': True, 'drop_last': False, 'batch_size_per_card': 2, 'num_workers': 4}}
+
+            #Populate Eval key
+            self.config["Eval"] = {'dataset': {'name': 'SimpleDataSet', 'data_dir': '%s/train_data/det/val'%(model_dir), 'label_file_list': ['%s/train_data/det/val.txt'%(model_dir)], 'transforms': [{'DecodeImage': {'img_mode': 'RGB', 'channel_first': False}}, {'VQATokenLabelEncode': {'contains_re': True, 'algorithm': algorithm, 'class_path': '%s/label-key-list.txt'%(model_dir), 'use_textline_bbox_info': True, 'order_method': 'tb-yx'}}, {'VQATokenPad': {'max_seq_len': 512, 'return_attention_mask': True}}, {'VQAReTokenRelation':None}, {'VQAReTokenChunk': {'max_seq_len': 512}}, {'TensorizeEntitiesRelations':None}, {'Resize': {'size': [224, 224]}}, {'NormalizeImage': {'scale': 1, 'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375], 'order': 'hwc'}}, {'ToCHWImage': None}, {'KeepKeys': {'keep_keys': ['input_ids', 'bbox', 'attention_mask', 'token_type_ids', 'entities', 'relations']}}]}, 'loader': {'shuffle': False, 'drop_last': False, 'batch_size_per_card': 8, 'num_workers': 8}}
+
 
     def load_config(self):
         return self.config

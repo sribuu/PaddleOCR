@@ -50,7 +50,7 @@ from ppocr.modeling.architectures import build_model
 
 dist.get_world_size()
 
-
+#Import hyperparameters class
 from hyperparameters import HyperParameters    
 
 class SribuuOCRTrainer(object):
@@ -60,9 +60,9 @@ class SribuuOCRTrainer(object):
             model_dir, str, path to directory where the model we want to train is hosted (invoice, e-statements etc)
             fn_config, str, path to the configfile *.yml
     '''
-    def __init__(self, model_dir:str, fn_config:str, trainResume:str, predict=False, useCPU=True, predictInfer=False):
+    def __init__(self, model_dir:str, trainResume:str, predict=False, useCPU=True, predictInfer=False):
         #Config YML file
-        self.fn_config = fn_config
+        #self.fn_config = fn_config
 
         #Resume training or nah?
         self.trainResume = trainResume
@@ -85,7 +85,7 @@ class SribuuOCRTrainer(object):
             Put the keys, values in dictionary 
         '''
         pass
-    
+
     def link_file(self):
         #Join the self.model_dir with *.txt
         self.linking_file = "%s/label-key-list-pair.txt"%(self.model_dir)
@@ -312,7 +312,7 @@ if __name__ == "__main__":
      
     trainer = SribuuOCRTrainer(
         model_dir = '/home/philgun/Documents/sribuu/ocr/models/re',
-        fn_config = '/home/philgun/Documents/sribuu/ocr/paddle-ocr-sribuu/tools_custom/ocr-engine-config.yml',
+        #fn_config = '/home/philgun/Documents/sribuu/ocr/paddle-ocr-sribuu/tools_custom/ocr-engine-config.yml',
         trainResume = None,
         useCPU = True
     )

@@ -34,12 +34,15 @@ def singleRerecognition(filePath,shapePoints):
         box = [[int(p[0]), int(p[1])] for p in shapePoints]
         img_crop = get_rotate_crop_image(img, np.array(box, np.float32))
         if img_crop is None:
-            raise CustomError("Can not recognise coordinates")
+            return[None,0]
         result = ocrService.ocr(img_crop, cls=True, det=False)[0]
         if result[0][0] != '':
             return result[0]
         else:
-            raise CustomError("Can not recognise the box")
+            return[None,0]
 
 res = singleRerecognition(args.filePath,args.shapePoints)
-print(f"[\"{res[0]}\",{res[1]}]")
+if res[0] is not None:
+    print(f"[\"{res[0]}\",{res[1]}]")
+else:
+    print(f"[null]")

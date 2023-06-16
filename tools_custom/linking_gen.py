@@ -7,7 +7,6 @@ parser = argparse.ArgumentParser()
 
 # Menambahkan argumen yang diharapkan
 parser.add_argument("--labelFile", type=str, default="Label.txt", help="Input label as Label.txt")
-parser.add_argument("--linkingFile", type=str, default="key_linking.txt", help="Key-Value pair as linking, e.g key_linking.txt")
 parser.add_argument("--labelOutputFile", type=str, default="Label-linked.txt", help="Generated Label with id and linking. e.g Label-output.txt")
 
 # Parse argumen dari terminal
@@ -27,14 +26,9 @@ if(directory=="") :
 rootPath = f"{rootPath}/"
 
 filename = f"{rootPath}{args.labelFile}"  # file to read
-linking_file = f"{rootPath}{args.linkingFile}"
 
 _dict = {}  # text will be store as dictionary
 _links = []  # text will be store as array of key_linking
-
-with open(linking_file, "r") as file:
-    file_contents = file.read()  # read file
-    _links = eval(file_contents)  # store into key_linking list
 
 # creating dictionary
 with open(filename) as fh:
@@ -62,23 +56,6 @@ with open(filename) as fh:
                         temp_data["label"] = "IGNORE"
                 temp[i] = temp_data  # modify current data on temp
 
-
-            # for i in range(len(temp)):
-            #     temp_data = temp[i]
-
-            #     label = temp_data["label"]  # get label
-
-            #     value_link = next((item for item in _links if item["value"] == label), None)
-                
-            #     if(value_link is not None) : 
-            #         index = next((index for index, item in enumerate(temp) if item["label"] == value_link["key"]), -1)
-            #         key_data = temp[index]
-                    
-            #         if(index > -1 and key_data["label"] == value_link["key"]):
-            #             temp[index]["linking"].append([key_data["id"], temp_data["id"]])
-            #             temp_data["linking"].append([key_data["id"], temp_data["id"]])
-
-            #     temp[i] = temp_data  # modify current data on temp
 
             _dict[key] = json.dumps(temp)  # putting back into _dict
 

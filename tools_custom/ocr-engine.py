@@ -229,6 +229,7 @@ class SribuuOCRTrainer(object):
         #Instatiate the Hyperparameters class with args taken from a dictionary -- this dictionary contains decision variables for the hyperparameter optimisation
         hp = HyperParameters(
             model_dir = self.model_dir,
+            epoch_num = hyperparams["epoch_num"],
             global_model = hyperparams["global_model"],
             use_gpu = not self.useCPU,
             optimizer_name = hyperparams["optimizer_name"],
@@ -335,6 +336,8 @@ if __name__ == "__main__":
 
     #Instantiate dictionary that contains hyperparameters
     hyperparams = {}
+
+    hyperparams["epoch_num"] = 20
     hyperparams["algorithm"] = "LayoutXLM"
     hyperparams["optimizer_name"] = "AdamW"
     hyperparams["loss_name"] = "VQASerTokenLayoutLMLoss"
@@ -345,8 +348,8 @@ if __name__ == "__main__":
     hyperparams["regularizer_name"] = "L2"
     hyperparams["regularizer_factor"] = 0.0
 
-    #What model do you train?
-    model = "ALL"
+    #What model do you train?ALL
+    model = "SER"
 
     #Catch training metric
     best_metric = trainer.fit(

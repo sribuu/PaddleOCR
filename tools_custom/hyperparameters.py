@@ -39,7 +39,7 @@ class HyperParameters(object):
         #Configuring the model directory to save
         self.config["Global"]['save_model_dir'] = "%s/model_checkpoint/%s"%(
             model_dir,
-            self.global_model.str.lower()
+            self.global_model.lower()
         )
 
         self.config["Global"]['save_epoch_step'] = save_epoch_step
@@ -49,21 +49,21 @@ class HyperParameters(object):
         #Configuring the model directory for inference?
         self.config["Global"]['save_inference_dir'] = "%s/model_compiled/%s"%(
             model_dir,
-            self.global_model.str.lower()
+            self.global_model.lower()
         )
 
         self.config["Global"]['use_visualdl'] = use_visualdl
         self.config["Global"]['seed'] = seed
 
         self.config["Global"]['infer_img'] = "%s/train_data/det/test.txt"%(
-            model_dir,
+            model_dir
         )
-        
+
         self.config["Global"]['infer_mode'] = infer_mode
 
         self.config["Global"]['save_res_path'] = "%s/output/%s"%(
             model_dir,
-            self.global_model.str.lower()
+            self.global_model.lower()
         )
 
 

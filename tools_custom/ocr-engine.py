@@ -34,6 +34,7 @@ import argparse
 
 from gen_ocr_train_val_test import *
 
+#Importing paddle
 import yaml
 import paddle
 import paddle.distributed as dist
@@ -54,6 +55,10 @@ dist.get_world_size()
 
 #Import hyperparameters class
 from hyperparameters import HyperParameters    
+
+#Import Bayesian Optimiser
+import functools
+from bayes_opt import BayesianOptimization as BO
 
 class SribuuOCRTrainer(object):
     '''
@@ -247,7 +252,11 @@ class SribuuOCRTrainer(object):
         return hp
 
     
-    def fit(self, hyperparams:dict, model:str, train_fraction=0.6, validation_fraction=0.2):
+    def fit(
+            self, hyperparams:dict, model:str, 
+            train_fraction, validation_fraction, #static hyperparams
+            beta1, beta2, learning_rate, regularizer_factor #optimised hyperparams
+        ):
         '''
         Train the model. This is where the magic happens mate!
             args:
@@ -288,6 +297,12 @@ class SribuuOCRTrainer(object):
         #Instantiate hyperparameters object
         hyperparams["num_classes"] = self.num_classes
         hyperparams["global_model"] = self.model
+        
+        #Assign key, values of the optimised hyperparams to the hyperparams dict
+        hyperparams["beta1"] = beta1
+        hyperparams["beta2"] = beta2
+        hyperparams["learning_rate"] = learning_rate
+        hyperparams["regularizer_factor"] = regularizer_factor
 
         hp = self.read_hyperparameter(hyperparams)
 
@@ -337,27 +352,69 @@ if __name__ == "__main__":
     #Instantiate dictionary that contains hyperparameters
     hyperparams = {}
 
-    hyperparams["epoch_num"] = 20
+    '''
+    Differentiate static hyperparams e.g. epoch from the optimised params
+        static: epoch_num, algorithm, optimizer_name, loss_name, regularize_name
+
+        optimised: beat1, beta2, learning_rate, regularizer_factor
+    '''
+    hyperparams["epoch_num"] = 3
     hyperparams["algorithm"] = "LayoutXLM"
     hyperparams["optimizer_name"] = "AdamW"
     hyperparams["loss_name"] = "VQASerTokenLayoutLMLoss"
+    hyperparams["regularizer_name"] = "L2"
+    hyperparams["lr_name"] = "Linear"
+
+    '''
     hyperparams["beta1"] = 0.9
     hyperparams["beta2"] = 0.999
-    hyperparams["lr_name"] = "Linear"
     hyperparams["learning_rate"] = 5e-5
-    hyperparams["regularizer_name"] = "L2"
     hyperparams["regularizer_factor"] = 0.0
+    '''
 
     #What model do you train?ALL
     model = "SER"
 
+    #Instantiate partial obj function, where hyperparams is left off for optimisation routine
+    objfunc = functools.partial(
+        trainer.fit, hyperparams = hyperparams, model=model, 
+        train_fraction=0.6, validation_fraction=0.2
+    )
+
+    #Instantiate the training parameters
+    parameterbounds = {
+        'beta1':(0.8,1),
+        'beta2':(0.9,1),
+        'learning_rate':(5e-7,5e-4),
+        'regularizer_factor':(0,0.499)
+    }
+
+    #Instantiate the optimisation object
+    opt = BO(
+        f=objfunc,
+        pbounds=parameterbounds,
+        verbose=2,
+        random_state=42
+    )
+
+    #Star bayesian optimiser
+    start_time = time.time()
+    
+    opt.maximize(init_points=200,n_iter=200)
+    
+    delta = time.time() - start_time
+
+    print("Total time for bayesian optimisation: %s s"%delta)
+
+    '''
     #Catch training metric
     best_metric = trainer.fit(
         model=model, hyperparams = hyperparams
     )
+    '''
 
     print(
-        "Output best metric = %s"%(best_metric)
+        "Output best metric = %s"%(opt.max)
     )
 
 

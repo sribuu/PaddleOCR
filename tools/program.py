@@ -475,7 +475,7 @@ def train(config,
         log_writer.close()
     
     #Output & return training metric
-    return
+    return  best_model_dict[main_indicator]
 
 
 def eval(model,

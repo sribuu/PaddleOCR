@@ -48,6 +48,8 @@ from ppocr.utils.utility import set_seed
 from ppocr.modeling.architectures import apply_to_static
 from ppocr.modeling.architectures import build_model
 
+import time
+
 dist.get_world_size()
 
 #Import hyperparameters class
@@ -58,7 +60,6 @@ class SribuuOCRTrainer(object):
         Class abstraction for Trainer to train the OCR model
         Params:
             model_dir, str, path to directory where the model we want to train is hosted (invoice, e-statements etc)
-            fn_config, str, path to the configfile *.yml
     '''
     def __init__(self, model_dir:str, trainResume:str, predict=False, useCPU=True, predictInfer=False):
         #Config YML file
@@ -299,7 +300,20 @@ class SribuuOCRTrainer(object):
             config, device, logger, vdl_writer = program.preprocess(is_train = not self.predict, flags_ = hp)
             seed = config['Global']['seed'] if 'seed' in config['Global'] else 1024
             set_seed(seed)
-            train.main(config, device, logger, vdl_writer)
+
+            now = time.time()
+            best_metric = train.main(config, device, logger, vdl_writer)
+
+            print(
+                "==================================== Training %s model took %.2f seconds. Metric = %s with score %.4f"%(
+                    self.model,
+                    time.time() - now,
+                    hp.config["Metric"]["name"],
+                    best_metric
+                )
+            )
+
+            return best_metric
 
         else:
             pass
@@ -312,7 +326,6 @@ if __name__ == "__main__":
      
     trainer = SribuuOCRTrainer(
         model_dir = '/home/philgun/Documents/sribuu/ocr/models/re',
-        #fn_config = '/home/philgun/Documents/sribuu/ocr/paddle-ocr-sribuu/tools_custom/ocr-engine-config.yml',
         trainResume = None,
         useCPU = True
     )
@@ -330,8 +343,12 @@ if __name__ == "__main__":
     hyperparams["regularizer_factor"] = 0.0
 
     #Catch training metric
-    trainer.fit(
+    best_metric = trainer.fit(
         model="ALL", hyperparams = hyperparams
+    )
+
+    print(
+        "Output best metric = %s"%(best_metric)
     )
 
 

@@ -306,6 +306,14 @@ class SribuuOCRTrainer(object):
 
         hp = self.read_hyperparameter(hyperparams)
 
+        #File to store hyperparameter optimisation
+        with open(
+            "%s/optimisation_model_%s.txt"%(self.model_dir, self.model),"w"
+        ) as f:
+            f.write(
+                "beta1,beta2,learning_rate,regularizer_factor,metric\n"
+            )
+
         '''
         Start the training for a specific model as self.model
         '''
@@ -329,6 +337,16 @@ class SribuuOCRTrainer(object):
                     time.time() - now,
                     hp.config["Metric"]["name"],
                     best_metric
+                )
+            )
+
+            #Write optimisation variables and result of the ith iteration
+            with open(
+                "%s/optimisation_model_%s.txt"%(self.model_dir, self.model),"a"
+            ) as f:
+                f.write(
+                    "%s,%s,%s,%s,%s\n"%(
+                    beta1, beta2, learning_rate, regularizer_factor, best_metric
                 )
             )
 
@@ -416,7 +434,6 @@ if __name__ == "__main__":
     print(
         "Output best metric = %s"%(opt.max)
     )
-
 
 '''
         #Link the linking file

@@ -9,7 +9,7 @@ class HyperParameters(object):
 
             profiler_options=None,
             
-            use_gpu=False, epoch_num=200, log_smooth_window=10, print_batch_step=10, save_model_dir='./model_checkpoint/ser',
+            use_gpu=False, epoch_num=200, log_smooth_window=10, print_batch_step=10, save_model_dir='model_checkpoint',
             save_epoch_step=2000, eval_batch_step = [0,19], cal_metric_during_train=False, save_inference_dir='./model_compiled/ser',
             use_visualdl=False, seed=143, infer_img='./train_data/det/test.txt', infer_mode=False, save_res_path='./output/ser',
             kie_rec_model_dir=None, kie_det_model_dir=None, 
@@ -23,9 +23,7 @@ class HyperParameters(object):
             metric_name='VQASerTokenMetric', metric_main_indicator="hmean"
         ):
         #FIXME: Add hyperparams for global_model "SER"
-
         self.global_model = global_model
-
 
         #Instantiate self.config attribute
         self.config = {}
@@ -37,16 +35,38 @@ class HyperParameters(object):
         self.config["Global"]['epoch_num'] = epoch_num
         self.config["Global"]['log_smooth_window'] = log_smooth_window
         self.config["Global"]['print_batch_step'] = print_batch_step
-        self.config["Global"]['save_model_dir'] = save_model_dir
+
+        #Configuring the model directory to save
+        self.config["Global"]['save_model_dir'] = "%s/model_checkpoint/%s"%(
+            model_dir,
+            self.global_model.str.lower()
+        )
+
         self.config["Global"]['save_epoch_step'] = save_epoch_step
         self.config["Global"]['eval_batch_step'] = eval_batch_step
         self.config["Global"]['cal_metric_during_train'] = cal_metric_during_train
-        self.config["Global"]['save_inference_dir'] = save_inference_dir
+
+        #Configuring the model directory for inference?
+        self.config["Global"]['save_inference_dir'] = "%s/model_compiled/%s"%(
+            model_dir,
+            self.global_model.str.lower()
+        )
+
         self.config["Global"]['use_visualdl'] = use_visualdl
         self.config["Global"]['seed'] = seed
-        self.config["Global"]['infer_img'] = infer_img
+
+        self.config["Global"]['infer_img'] = "%s/train_data/det/test.txt"%(
+            model_dir,
+        )
+        
         self.config["Global"]['infer_mode'] = infer_mode
-        self.config["Global"]['save_res_path'] = save_res_path
+
+        self.config["Global"]['save_res_path'] = "%s/output/%s"%(
+            model_dir,
+            self.global_model.str.lower()
+        )
+
+
         self.config["Global"]['kie_rec_model_dir'] = kie_rec_model_dir
         self.config["Global"]['kie_det_model_dir'] = kie_det_model_dir
 

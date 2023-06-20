@@ -43,28 +43,30 @@ with open(filename) as fh:
 
         for key, values in _dict.items():
             temp = json.loads(values)  # temporary store array values from dict
+            while_count = 1  # counting from 1, allowing us to remove element if needed
+            _index = while_count - 1  # real index from array
+            minimum_linking = 1
+            has_linking = 0
 
-            c = 1  # while counting starts from 1 to allow us safely remove elements from the temp
-            i = c - 1 # real index from array
-
-            while c <= len(temp):
+            while while_count <= len(temp):
                 temp_data = temp[i]
+                while_count += 1
 
-                if len(temp_data["linking"]) == 0:
-                    del temp[i]  # remove annotation data if it has no linking
-                    continue
-                else:
-                    if "key_cls" in temp_data:  # rename key_cls to label if needed
-                        temp_data["label"] = temp_data.pop("key_cls")
+                if len(temp_data["linking"]) > 0:
+                    has_linking += 1
 
-                    if temp_data["label"] == "None":
-                        temp_data["label"] = "IGNORE"
+                if "key_cls" in temp_data:  # rename key_cls to label if needed
+                    temp_data["label"] = temp_data.pop("key_cls")
 
-                    temp[i] = temp_data  # modify current data in temp
+                if temp_data["label"] == "None":
+                    temp_data["label"] = "IGNORE"
 
-                c += 1
+                temp[i] = temp_data  # modify current data in temp
 
-            _dict[key] = json.dumps(temp)  # putting back into _dict
+            if has_linking > minimum_linking:
+                _dict[key] = json.dumps(temp)  # putting back into _dict
+            else:
+                del _dict[key]  # delete files that doesn't have enough key_linking
 
 # convert dictionary into text separated by new line
 text = "\n".join([f"{key}\t{value}" for key, value in _dict.items()])

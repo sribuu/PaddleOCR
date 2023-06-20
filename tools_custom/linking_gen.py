@@ -63,7 +63,7 @@ with open(filename) as fh:
 
                 temp[i] = temp_data  # modify current data in temp
 
-            if has_linking > minimum_linking:
+            if has_linking >= minimum_linking:
                 _dict[key] = json.dumps(temp)  # putting back into _dict
             else:
                 del _dict[key]  # delete files that doesn't have enough key_linking

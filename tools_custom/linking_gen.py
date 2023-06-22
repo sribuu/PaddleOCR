@@ -51,8 +51,12 @@ with open(filename) as fh:
             while while_count <= len(temp):
                 temp_data = temp[_index]
                 while_count += 1
+                # if  "id" not in temp_data:
+                #     temp_data["id"] = while_count
+                # if  "linking" not in temp_data:
+                #     temp_data["linking"] = []
 
-                if len(temp_data["linking"]) > 0:
+                if  "linking" in temp_data and len(temp_data["linking"]) > 0:
                     has_linking += 1
 
                 if "key_cls" in temp_data:  # rename key_cls to label if needed

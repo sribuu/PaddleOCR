@@ -90,7 +90,7 @@ try:
             file.write("\n".join(result))
 
         print(f"== Generating id and linking for dataset label based on {linking_file}")
-        subprocess.run(["python3", linking_gen_script, "--linkingFile", "label-key-list-pair.txt", "--labelFile", "Label.txt", "--labelOutputFile", "Label-linked.txt"])
+        subprocess.run(["python3", linking_gen_script, "--labelFile", "Label.txt", "--labelOutputFile", "Label-linked.txt"])
 
         print("== Generate Rec Cropped Img")
         subprocess.run(["python3", rec_gt_gen_script, "--outputFileGT", "rec_gt.txt", "--labelFile", "Label-linked.txt", "--outputFileDir", "crop_img/"])

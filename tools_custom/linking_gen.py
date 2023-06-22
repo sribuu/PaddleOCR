@@ -6,9 +6,7 @@ import os
 parser = argparse.ArgumentParser()
 
 # Menambahkan argumen yang diharapkan
-parser.add_argument(
-    "--labelFile", type=str, default="Label.txt", help="Input label as Label.txt"
-)
+parser.add_argument("--labelFile", type=str, default="Label.txt", help="Input label as Label.txt")
 parser.add_argument(
     "--labelOutputFile",
     type=str,
@@ -33,6 +31,7 @@ if directory == "":
 rootPath = f"{rootPath}/"
 filename = f"{rootPath}{args.labelFile}"  # file to read
 _dict = {}  # text will be store as dictionary
+_dictRE = {}  # text will be store as dictionary for RE
 
 # creating dictionary
 with open(filename) as fh:
@@ -40,6 +39,7 @@ with open(filename) as fh:
         # reads each line and turn into key value pair dict
         command, description = line.split("\t", 1)
         _dict[command] = description.strip()
+        _dictRE[command] = description.strip()
 
         for key, values in _dict.items():
             temp = json.loads(values)  # temporary store array values from dict
@@ -49,7 +49,7 @@ with open(filename) as fh:
             has_linking = 0
 
             while while_count <= len(temp):
-                temp_data = temp[i]
+                temp_data = temp[_index]
                 while_count += 1
 
                 if len(temp_data["linking"]) > 0:
@@ -59,18 +59,22 @@ with open(filename) as fh:
                     temp_data["label"] = temp_data.pop("key_cls")
 
                 if temp_data["label"] == "None":
-                    temp_data["label"] = "IGNORE"
+                    temp_data["label"] = "ignore"
 
-                temp[i] = temp_data  # modify current data in temp
-
+                temp[_index] = temp_data  # modify current data in temp
+            _dict[key] = json.dumps(temp)
             if has_linking >= minimum_linking:
-                _dict[key] = json.dumps(temp)  # putting back into _dict
+                _dictRE[key] = json.dumps(temp)  # putting back into _dict
             else:
-                del _dict[key]  # delete files that doesn't have enough key_linking
+                del _dictRE[key]  # delete files that doesn't have enough key_linking
 
 # convert dictionary into text separated by new line
 text = "\n".join([f"{key}\t{value}" for key, value in _dict.items()])
+textRE = "\n".join([f"{key}\t{value}" for key, value in _dictRE.items()])
 
 # write the text to a file
 with open(f"{rootPath}{args.labelOutputFile}", "w") as file:
     file.write(text + "\n")
+
+with open(f"{rootPath}Label-linked-RE.txt", "w") as file:
+    file.write(textRE + "\n")

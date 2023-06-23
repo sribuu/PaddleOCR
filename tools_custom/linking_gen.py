@@ -66,7 +66,10 @@ with open(filename) as fh:
                     temp_data["label"] = "ignore"
 
                 temp[_index] = temp_data  # modify current data in temp
+                _index += 1
+                
             _dict[key] = json.dumps(temp)
+            
             if has_linking >= minimum_linking:
                 _dictRE[key] = json.dumps(temp)  # putting back into _dict
             else:

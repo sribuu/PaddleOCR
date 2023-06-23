@@ -47,7 +47,7 @@ with open(filename) as fh:
             _index = while_count - 1  # real index from array
             minimum_linking = 1
             has_linking = 0
-
+            
             while while_count <= len(temp):
                 temp_data = temp[_index]
                 while_count += 1
@@ -70,7 +70,8 @@ with open(filename) as fh:
             if has_linking >= minimum_linking:
                 _dictRE[key] = json.dumps(temp)  # putting back into _dict
             else:
-                del _dictRE[key]  # delete files that doesn't have enough key_linking
+                if key in _dictRE:
+                    del _dictRE[key]  # delete files that doesn't have enough key_linking
 
 # convert dictionary into text separated by new line
 text = "\n".join([f"{key}\t{value}" for key, value in _dict.items()])

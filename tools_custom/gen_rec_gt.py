@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 import json
-from tools.infer.utility import get_rotate_crop_image
+from paddleocr.tools.infer.utility import get_rotate_crop_image
 import argparse
 
 # Mendapatkan current directory

@@ -10,6 +10,7 @@ parser.add_argument("--config", help="OCR engine config file.yml")
 parser.add_argument("--train", choices=["SER", "RE", "ALL"], help="Start Training. [SER, RE, ALL] or ALL to start training both sequentially")
 parser.add_argument("--trainResume", choices=["SER", "RE"], help="Resume Training. [SER, RE]. If you have any changes on dataset, please retraining instead.")
 parser.add_argument("--predict", help="Start Prediction.")
+parser.add_argument("--datasetRatio", default="6:2:2", help="Start Prediction.")
 parser.add_argument("--useCPU", action="store_true", help="Use this param to disable GPU and use CPU Instead.")
 parser.add_argument("--predictInfer", help="Start Prediction using Raw/Checkpoint Model.")
 args = parser.parse_args()
@@ -96,7 +97,7 @@ try:
         subprocess.run(["python3", rec_gt_gen_script, "--outputFileGT", "rec_gt.txt", "--labelFile", "Label-linked.txt", "--outputFileDir", "crop_img/"])
 
         print("== Splitting dataset with ratio 6:2:2")
-        subprocess.run(["python3", dataset_divider_script, "--trainValTestRatio", "6:2:2", "--datasetRootPath", "", "--detLabelFileName", "Label-linked.txt", "--recLabelFileName", "rec_gt.txt", "--recImageDirName", "crop_img", "--detRootPath", "./train_data/det", "--recRootPath", "./train_data/rec"])
+        subprocess.run(["python3", dataset_divider_script, "--trainValTestRatio",args.datasetRatio, "--datasetRootPath", "", "--detLabelFileName", "Label-linked.txt", "--recLabelFileName", "rec_gt.txt", "--recImageDirName", "crop_img", "--detRootPath", "./train_data/det", "--recRootPath", "./train_data/rec"])
 
         # Update Entity labels for RE
         data_dict = {}

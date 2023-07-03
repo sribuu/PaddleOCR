@@ -5,6 +5,8 @@ FIXME:
         > Trainer (calling Model, instantiate model, train, metric output)
         > Data (Clean , compartmentalise data)
         > HyperParameterOptimisation(Optimisation of hyperparams based on the trainer metric)
+
+        vqa_token_relation.py --> limitation in RE only use 2 labels
 '''
 import sys
 import os
@@ -28,9 +30,11 @@ import json
 from paddleocr import PaddleOCR, PPStructure
 import cv2
 import numpy as np
-from tools import program, train
+from tools import program, train, export_model
 from tools.infer.utility import get_rotate_crop_image
 import argparse
+
+import pandas as pd
 
 from gen_ocr_train_val_test import *
 
@@ -59,6 +63,8 @@ from hyperparameters import HyperParameters
 #Import Bayesian Optimiser
 import functools
 from bayes_opt import BayesianOptimization as BO
+
+from numba import cuda
 
 class SribuuOCRTrainer(object):
     '''
@@ -184,7 +190,7 @@ class SribuuOCRTrainer(object):
                         ques_img.append(key)
                         print("Can not read image ", e)
     
-    def split_data(self, train_fraction, validation_fraction):
+    def split_data(self, train_fraction, validation_fraction, test_fraction):
         self.datasetRootPath = ""
         self.detLabelFileName = "%s/Label-linked.txt"%(self.model_dir)
         self.recLabelFileName = self.rec_gt_fn
@@ -193,15 +199,15 @@ class SribuuOCRTrainer(object):
         self.recRootPath = "%s/train_data/rec"%(self.model_dir) 
 
         #All added has to be one innit?
-        test_fraction = 1 - train_fraction - validation_fraction
+        whole = test_fraction + train_fraction + validation_fraction
 
         try:
             assert(
-                test_fraction > 0
+                whole <= 1
             )
         except Exception as e:
             raise ValueError(
-                "Train fraction + validation fraction + test fraction = 1."
+                "Train fraction + validation fraction + test fraction > 1."
             )
         
         self.trainValTestRatio = "%s:%s:%s"%(
@@ -250,11 +256,14 @@ class SribuuOCRTrainer(object):
         )
 
         return hp
-
     
+    def export(self):
+        '''Method to export the trained model'''
+        export_model.main(self.config)
+        
     def fit(
             self, hyperparams:dict, model:str, 
-            train_fraction, validation_fraction, #static hyperparams
+            train_fraction, validation_fraction, test_fraction, #static hyperparams
             beta1, beta2, learning_rate, regularizer_factor #optimised hyperparams
         ):
         '''
@@ -282,7 +291,7 @@ class SribuuOCRTrainer(object):
 
         #Splitting data set
         print("== Splitting dataset")
-        self.split_data(train_fraction, validation_fraction)
+        self.split_data(train_fraction, validation_fraction, test_fraction)
 
         #Count number of classes
         with open("%s/label-key-list.txt"%(self.model_dir), 'r') as f:
@@ -294,9 +303,8 @@ class SribuuOCRTrainer(object):
         self.num_classes = (2 * num_count) - 1
         print("== Update num_classes to %s"%(self.num_classes))
 
-        #Instantiate hyperparameters object
+        #Instantiate hyperparameters dict
         hyperparams["num_classes"] = self.num_classes
-        hyperparams["global_model"] = self.model
         
         #Assign key, values of the optimised hyperparams to the hyperparams dict
         hyperparams["beta1"] = beta1
@@ -304,26 +312,24 @@ class SribuuOCRTrainer(object):
         hyperparams["learning_rate"] = learning_rate
         hyperparams["regularizer_factor"] = regularizer_factor
 
-        hp = self.read_hyperparameter(hyperparams)
-
-        #File to store hyperparameter optimisation
-        with open(
-            "%s/optimisation_model_%s.txt"%(self.model_dir, self.model),"w"
-        ) as f:
-            f.write(
-                "beta1,beta2,learning_rate,regularizer_factor,metric\n"
-            )
-
         '''
         Start the training for a specific model as self.model
         '''
-        if self.model in ["SER","ALL"]:
+        if self.model == "SER":
             '''
             So this part is a bit messy. Calling a script full of functions where one of them instantiate an argparse. But hey, when it works, it works. Therefore, I wrap this part of the code with a wrapper to make it more Pythonic (I guess)
             '''
             print("== Training %s Model"%(self.model))
+
+            #Tricky thing is that if user wants to do "ALL" training, then this part of the code is only for SER, that's why I hardcoded SER here
+            if self.model == "ALL":
+                self.model = "SER"
+
+            #Instantiate hyperparameter object
+            hyperparams["global_model"] = self.model
+            hp = self.read_hyperparameter(hyperparams)
             
-            #Calling program method
+            #Calling program method and traing SER model
             config, device, logger, vdl_writer = program.preprocess(is_train = not self.predict, flags_ = hp)
             seed = config['Global']['seed'] if 'seed' in config['Global'] else 1024
             set_seed(seed)
@@ -333,7 +339,58 @@ class SribuuOCRTrainer(object):
 
             print(
                 "==================================== Training %s model took %.2f seconds. Metric = %s with score %.4f"%(
-                    self.model,
+                    "SER",
+                    time.time() - now,
+                    hp.config["Metric"]["name"],
+                    best_metric
+                )
+            )
+            
+            #Write optimisation variables and result of the ith iteration
+            with open(
+                "%s/optimisation_model_%s.csv"%(self.model_dir, self.model),"a"
+            ) as f:
+                f.write(
+                    "%s,%s,%s,%s,%s\n"%(
+                    beta1, beta2, learning_rate, regularizer_factor, best_metric
+                )
+            )
+            
+            #Export model            
+            df__ = pd.read_csv(
+                "%s/optimisation_model_%s.csv"%(self.model_dir, self.model),"a"
+            )
+
+            past_best_metric = df__["metric"]
+
+            #You actually have done the optimisaiton
+            if len(past_best_metric)>0:
+                if best_metric >= past_best_metric.max():
+                    self.export()
+
+        else:
+            #RE model training
+            print("== Training %s Model"%(self.model))
+
+            #Tricky thing is that if user wants to do "ALL" training, then this part of the code is only for SER, that's why I hardcoded SER here
+            if self.model == "ALL":
+                self.model = "RE"
+
+            #Instantiate hyperparameter object
+            hyperparams["global_model"] = self.model
+            hp = self.read_hyperparameter(hyperparams)
+
+            #Calling program method and train RE model
+            config, device, logger, vdl_writer = program.preprocess(is_train = not self.predict, flags_ = hp)
+            seed = config['Global']['seed'] if 'seed' in config['Global'] else 1024
+            set_seed(seed)
+
+            now = time.time()
+            best_metric = train.main(config, device, logger, vdl_writer)
+
+            print(
+                "==================================== Training %s model took %.2f seconds. Metric = %s with score %.4f"%(
+                    "RE",
                     time.time() - now,
                     hp.config["Metric"]["name"],
                     best_metric
@@ -342,7 +399,7 @@ class SribuuOCRTrainer(object):
 
             #Write optimisation variables and result of the ith iteration
             with open(
-                "%s/optimisation_model_%s.txt"%(self.model_dir, self.model),"a"
+                "%s/optimisation_model_%s.csv"%(self.model_dir, self.model),"a"
             ) as f:
                 f.write(
                     "%s,%s,%s,%s,%s\n"%(
@@ -350,21 +407,70 @@ class SribuuOCRTrainer(object):
                 )
             )
 
-            return best_metric
+            #Export model            
+            df__ = pd.read_csv(
+                "%s/optimisation_model_%s.csv"%(self.model_dir, self.model),"a"
+            )
 
-        else:
-            pass
+            past_best_metric = df__["metric"]
 
+            #You actually have done the optimisaiton
+            if len(past_best_metric)>0:
+                if best_metric >= past_best_metric.max():
+                    self.export()
+
+        #Free-ing GPU resources
+        free_GPU()
+
+        #Return best_metric for the optimisaiton's objective function
+        return best_metric
+    
+    def predict(self):
+        '''Predict from the final trained-model'''
+        pass
+
+    def infer(self):
+        '''Predict from the model checkpoints'''
+        pass
+        
+
+def create_log_optimisation(model_dir, model):
+    #File to store hyperparameter optimisation
+    with open(
+        "%s/optimisation_model_%s.csv"%(model_dir, model),"w"
+    ) as f:
+        f.write(
+            "beta1,beta2,learning_rate,regularizer_factor,metric\n"
+        )
+
+def free_GPU():
+    #Method to kill all processes running on GPU and free GPU resources
+    cuda.select_device(0)
+    cuda.close()
 
 
 if __name__ == "__main__":
     #FIXME: Add hyperparams for RE
     # for _ in 20000 maximise training metric by changing hyperparams
-     
+    model_dir = '/home/philgun/Documents/sribuu/ocr/models/re'
+    useCPU = True
+
+    train_fraction = 0.6
+    validation_fraction = 0.2
+    test_fraction = 0.2
+
+    #What model do you train?ALL
+    model = "ALL"
+
     trainer = SribuuOCRTrainer(
-        model_dir = '/home/philgun/Documents/sribuu/ocr/models/re',
+        model_dir = model_dir,
         trainResume = None,
-        useCPU = True
+        useCPU = useCPU
+    )
+
+    create_log_optimisation(
+        model_dir = model_dir,
+        model = model
     )
 
     #Instantiate dictionary that contains hyperparameters
@@ -376,7 +482,7 @@ if __name__ == "__main__":
 
         optimised: beat1, beta2, learning_rate, regularizer_factor
     '''
-    hyperparams["epoch_num"] = 3
+    hyperparams["epoch_num"] = 200
     hyperparams["algorithm"] = "LayoutXLM"
     hyperparams["optimizer_name"] = "AdamW"
     hyperparams["loss_name"] = "VQASerTokenLayoutLMLoss"
@@ -390,13 +496,10 @@ if __name__ == "__main__":
     hyperparams["regularizer_factor"] = 0.0
     '''
 
-    #What model do you train?ALL
-    model = "SER"
-
     #Instantiate partial obj function, where hyperparams is left off for optimisation routine
     objfunc = functools.partial(
         trainer.fit, hyperparams = hyperparams, model=model, 
-        train_fraction=0.6, validation_fraction=0.2
+        train_fraction=train_fraction, validation_fraction=validation_fraction, test_fraction=test_fraction
     )
 
     #Instantiate the training parameters

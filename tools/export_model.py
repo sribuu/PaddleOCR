@@ -189,10 +189,10 @@ def export_single_model(model,
     return
 
 
-def main():
+def main(config):
     FLAGS = ArgsParser().parse_args()
-    config = load_config(FLAGS.config)
-    config = merge_config(config, FLAGS.opt)
+    #config = load_config(FLAGS.config)
+    #config = merge_config(config, FLAGS.opt)
     logger = get_logger()
     # build post process
 

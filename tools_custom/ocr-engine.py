@@ -315,7 +315,7 @@ class SribuuOCRTrainer(object):
         '''
         Start the training for a specific model as self.model
         '''
-        if self.model == "SER":
+        if self.model == "SER" or self.model == "ALL":
             '''
             So this part is a bit messy. Calling a script full of functions where one of them instantiate an argparse. But hey, when it works, it works. Therefore, I wrap this part of the code with a wrapper to make it more Pythonic (I guess)
             '''
@@ -368,7 +368,7 @@ class SribuuOCRTrainer(object):
                 if best_metric >= past_best_metric.max():
                     self.export()
 
-        else:
+        elif self.model == "RE" or self.model == "ALL":
             #RE model training
             print("== Training %s Model"%(self.model))
 
@@ -468,10 +468,23 @@ if __name__ == "__main__":
         useCPU = useCPU
     )
 
-    create_log_optimisation(
-        model_dir = model_dir,
-        model = model
-    )
+    if model == "ALL":
+        create_log_optimisation(
+            model_dir = model_dir,
+            model = "SER"
+        )
+
+        create_log_optimisation(
+            model_dir = model_dir,
+            model = "RE"
+        )
+    else:
+        create_log_optimisation(
+            model_dir = model_dir,
+            model = model
+        )
+
+
 
     #Instantiate dictionary that contains hyperparameters
     hyperparams = {}

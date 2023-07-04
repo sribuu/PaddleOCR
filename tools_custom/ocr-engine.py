@@ -257,9 +257,9 @@ class SribuuOCRTrainer(object):
 
         return hp
     
-    def export(self):
+    def export(self,hp):
         '''Method to export the trained model'''
-        export_model.main(self.config)
+        export_model.main(hp.config)
         
     def fit(
             self, hyperparams:dict, model:str, 
@@ -358,7 +358,7 @@ class SribuuOCRTrainer(object):
             
             #Export model            
             df__ = pd.read_csv(
-                "%s/optimisation_model_%s.csv"%(self.model_dir, self.model),"a"
+                "%s/optimisation_model_%s.csv"%(self.model_dir, self.model)
             )
 
             past_best_metric = df__["metric"]
@@ -366,7 +366,7 @@ class SribuuOCRTrainer(object):
             #You actually have done the optimisaiton
             if len(past_best_metric)>0:
                 if best_metric >= past_best_metric.max():
-                    self.export()
+                    self.export(hp)
 
         elif self.model == "RE" or self.model == "ALL":
             #RE model training
@@ -417,7 +417,7 @@ class SribuuOCRTrainer(object):
             #You actually have done the optimisaiton
             if len(past_best_metric)>0:
                 if best_metric >= past_best_metric.max():
-                    self.export()
+                    self.export(hp)
 
         #Free-ing GPU resources
         free_GPU()

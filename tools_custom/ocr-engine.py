@@ -384,6 +384,10 @@ class SribuuOCRTrainer(object):
             hyperparams["global_model"] = self.model
             hp = self.read_hyperparameter(hyperparams)
 
+            print(
+                hp.config["Train"]
+            )
+
             #TESTING YAML
             fn = "%s/algorithm_re.yml"%(self.model_dir)
             with open(fn, 'r') as f:

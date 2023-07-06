@@ -384,6 +384,29 @@ class SribuuOCRTrainer(object):
             hyperparams["global_model"] = self.model
             hp = self.read_hyperparameter(hyperparams)
 
+            #TESTING YAML
+            fn = "/home/philgun/Documents/sribuu/ocr/models/invoice/algorithm_re.yml"
+            with open(fn, 'r') as f:
+                valuesYaml = yaml.load(f, Loader=yaml.FullLoader)
+            
+            #Global
+            for key,val in valuesYaml.tiems():
+                try:
+                    tmp__ = hp.config[key]
+                except:
+                    raise KeyError(
+                        "No %s in hyperparams"%(key)
+                    )
+                for k,v in val.items():
+                    try:
+                        print(
+                            "%s,%s,%s"%(
+                                k, hp.config[key][k], v
+                            )
+                        )
+                    except Exception as e:
+                        print(e)
+
             #Calling program method and train RE model
             config, device, logger, vdl_writer = program.preprocess(is_train = not self.predict, flags_ = hp)
             seed = config['Global']['seed'] if 'seed' in config['Global'] else 1024

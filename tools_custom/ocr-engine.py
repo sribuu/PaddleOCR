@@ -319,11 +319,11 @@ class SribuuOCRTrainer(object):
             '''
             So this part is a bit messy. Calling a script full of functions where one of them instantiate an argparse. But hey, when it works, it works. Therefore, I wrap this part of the code with a wrapper to make it more Pythonic (I guess)
             '''
-            print("== Training %s Model"%(self.model))
-
             #Tricky thing is that if user wants to do "ALL" training, then this part of the code is only for SER, that's why I hardcoded SER here
             if self.model == "ALL":
                 self.model = "SER"
+
+            print("== Training %s Model"%(self.model))
 
             #Instantiate hyperparameter object
             hyperparams["global_model"] = self.model
@@ -371,13 +371,13 @@ class SribuuOCRTrainer(object):
                 if best_metric >= past_best_metric.max():
                     self.export(hp)
 
-        elif self.model == "RE" or self.model == "ALL":
-            #RE model training
-            print("== Training %s Model"%(self.model))
-
+        if self.model == "RE" or self.model == "ALL":
             #Tricky thing is that if user wants to do "ALL" training, then this part of the code is only for SER, that's why I hardcoded SER here
             if self.model == "ALL":
                 self.model = "RE"
+                
+            #RE model training
+            print("== Training %s Model"%(self.model))
 
             #Instantiate hyperparameter object
             hyperparams["global_model"] = self.model

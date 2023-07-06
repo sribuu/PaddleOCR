@@ -407,7 +407,7 @@ class SribuuOCRTrainer(object):
                 )
             )
 
-            #Export model            
+            #Export model by first reading the hyperparameter optimisation log, and see if the current metric is better than the ones recorded. If that's the case, then save the model.          
             df__ = pd.read_csv(
                 "%s/optimisation_model_%s.csv"%(self.model_dir, self.model),"a"
             )
@@ -517,8 +517,8 @@ if __name__ == "__main__":
 
     #Instantiate the training parameters
     parameterbounds = {
-        'beta1':(0.8,1),
-        'beta2':(0.9,1),
+        'beta1':(0.8,0.95),
+        'beta2':(0.9,0.95),
         'learning_rate':(5e-7,5e-4),
         'regularizer_factor':(0,0.499)
     }
@@ -534,7 +534,7 @@ if __name__ == "__main__":
     #Star bayesian optimiser
     start_time = time.time()
     
-    opt.maximize(init_points=200,n_iter=200)
+    opt.maximize(init_points=1,n_iter=1)
     
     delta = time.time() - start_time
 

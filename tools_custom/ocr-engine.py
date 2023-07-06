@@ -423,58 +423,16 @@ class SribuuOCRTrainer(object):
             )
 
             t_trans_yml, e_trans_yml = valuesYaml["Train"]['dataset']['transforms'], valuesYaml["Eval"]['dataset']['transforms']
-            t_trans_cfg, e_trans_cfg = hp.config["Train"]['dataset']['transforms'], hp.config["Eval"]['dataset']['transforms']        
+            t_trans_cfg, e_trans_cfg = hp.config["Train"]['dataset']['transforms'], hp.config["Eval"]['dataset']['transforms']   
 
             print(
-                k, t_trans_yml["DecodeImage"], t_trans_cfg["DecodeImage"]
+                "\n\n\n\n\n",t_trans_yml, "\n\n\n\n\n", t_trans_cfg
             )
+            print(
+                "\n\n\n\n\n",e_trans_yml, "\n\n\n\n\n", e_trans_cfg
+            )     
 
-            for k,v in t_trans_yml["VQATokenLabelEncode"].items():
-                print(
-                    k, t_trans_yml["VQATokenLabelEncode"][k], t_trans_cfg["VQATokenLabelEncode"][k]
-                )
             
-            for k,v in t_trans_yml["VQATokenPad"].items():
-                print(
-                    k, t_trans_yml["VQATokenPad"][k], t_trans_cfg["VQATokenPad"][k]
-                )
-
-            print(
-               'VQAReTokenRelation', t_trans_yml["VQAReTokenRelation"],t_trans_cfg["VQAReTokenRelation"]
-            )
-
-            for k,v in t_trans_yml["VQAReTokenChunk"].items():
-                print(
-                    k, t_trans_yml["VQAReTokenChunk"][k], t_trans_cfg["VQAReTokenChunk"][k]
-                )
-
-            print(
-               'TensorizeEntitiesRelations', t_trans_yml["TensorizeEntitiesRelations"],t_trans_cfg["TensorizeEntitiesRelations"]
-            )
-
-            for k,v in t_trans_yml["Resize"].items():
-                print(
-                    k, t_trans_yml["Resize"][k], t_trans_cfg["Resize"][k]
-                )
-
-            for k,v in t_trans_yml["NormalizeImage"].items():
-                print(
-                    k, t_trans_yml["NormalizeImage"][k], t_trans_cfg["NormalizeImage"][k]
-                )
-
-            print(
-               'ToCHWImage', t_trans_yml["ToCHWImage"],t_trans_cfg["ToCHWImage"]
-            )
-
-            for k,v in t_trans_yml["KeepKeys"].items():
-                print(
-                    k, t_trans_yml["KeepKeys"][k], t_trans_cfg["KeepKeys"][k]
-                )
-
-            print(
-                "loader",t_yml["loader"], t_cfg["loader"]
-            )  
-
             #Calling program method and train RE model
             config, device, logger, vdl_writer = program.preprocess(is_train = not self.predict, flags_ = hp)
             seed = config['Global']['seed'] if 'seed' in config['Global'] else 1024

@@ -398,14 +398,83 @@ class SribuuOCRTrainer(object):
                         "No %s in hyperparams"%(key)
                     )
                 for k,v in val.items():
-                    try:
-                        print(
-                            "%s,%s,%s"%(
-                                k, hp.config[key][k], v
+                    if k not in ["Train","Eval"]:
+                        try:
+                            print(
+                                "%s,%s,%s"%(
+                                    k, hp.config[key][k], v
+                                )
                             )
-                        )
-                    except Exception as e:
-                        print(str(e))
+                        except Exception as e:
+                            print(str(e))
+                    
+            t_yml, e_yml = valuesYaml["Train"], valuesYaml["Eval"]
+            t_cfg, e_cfg = hp.config["Train"], hp.config["Eval"]
+
+            print(
+                t_yml["dataset"]["name"], t_cfg["dataset"]["name"],"\n",
+                t_yml["dataset"]["data_dir"], t_cfg["dataset"]["data_dir"],"\n",
+                t_yml["dataset"]["label_file_list"], t_cfg["dataset"]["label_file_list"],"\n",
+                t_yml["dataset"]["ratio_list"], t_cfg["dataset"]["ratio_list"],"\n",
+
+                e_yml["dataset"]["name"], e_cfg["dataset"]["name"],"\n",
+                e_yml["dataset"]["data_dir"],e_cfg["dataset"]["data_dir"],"\n",
+                e_yml["dataset"]["label_file_list"], e_cfg["dataset"]["label_file_list"],"\n"
+            )
+
+            t_trans_yml, e_trans_yml = valuesYaml["Train"]['transforms'], valuesYaml["Eval"]['transforms']
+            t_trans_cfg, e_trans_cfg = hp.config["Train"]['transforms'], hp.config["Eval"]['transforms']        
+
+            for k,v in t_trans_yml["DecodeImage"].items():
+                print(
+                    k, t_trans_yml["DecodeImage"][k], t_trans_cfg["DecodeImage"][k]
+                )
+
+            for k,v in t_trans_yml["VQATokenLabelEncode"].items():
+                print(
+                    k, t_trans_yml["VQATokenLabelEncode"][k], t_trans_cfg["VQATokenLabelEncode"][k]
+                )
+            
+            for k,v in t_trans_yml["VQATokenPad"].items():
+                print(
+                    k, t_trans_yml["VQATokenPad"][k], t_trans_cfg["VQATokenPad"][k]
+                )
+
+            print(
+               'VQAReTokenRelation', t_trans_yml["VQAReTokenRelation"],t_trans_cfg["VQAReTokenRelation"]
+            )
+
+            for k,v in t_trans_yml["VQAReTokenChunk"].items():
+                print(
+                    k, t_trans_yml["VQAReTokenChunk"][k], t_trans_cfg["VQAReTokenChunk"][k]
+                )
+
+            print(
+               'TensorizeEntitiesRelations', t_trans_yml["TensorizeEntitiesRelations"],t_trans_cfg["TensorizeEntitiesRelations"]
+            )
+
+            for k,v in t_trans_yml["Resize"].items():
+                print(
+                    k, t_trans_yml["Resize"][k], t_trans_cfg["Resize"][k]
+                )
+
+            for k,v in t_trans_yml["NormalizeImage"].items():
+                print(
+                    k, t_trans_yml["NormalizeImage"][k], t_trans_cfg["NormalizeImage"][k]
+                )
+
+            print(
+               'ToCHWImage', t_trans_yml["ToCHWImage"],t_trans_cfg["ToCHWImage"]
+            )
+
+            for k,v in t_trans_yml["KeepKeys"].items():
+                print(
+                    k, t_trans_yml["KeepKeys"][k], t_trans_cfg["KeepKeys"][k]
+                )
+
+            print(
+                "loader",t_yml["loader"], t_cfg["loader"]
+            )  
 
             #Calling program method and train RE model
             config, device, logger, vdl_writer = program.preprocess(is_train = not self.predict, flags_ = hp)

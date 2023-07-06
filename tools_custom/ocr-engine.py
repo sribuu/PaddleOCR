@@ -430,10 +430,10 @@ class SribuuOCRTrainer(object):
             t_trans_cfg, e_trans_cfg = hp.config["Train"]['dataset']['transforms'], hp.config["Eval"]['dataset']['transforms']   
 
             print(
-                "\n\n\n\n\n",t_trans_yml, "\n\n\n\n\n", t_trans_cfg
+                "Transform train yml \n\n\n\n\n",t_trans_yml, "Transform train python \n\n\n\n\n", t_trans_cfg
             )
             print(
-                "\n\n\n\n\n",e_trans_yml, "\n\n\n\n\n", e_trans_cfg
+                "Transform eval yml \n\n\n\n\n",e_trans_yml, "Transform eval python \n\n\n\n\n", e_trans_cfg
             )     
 
             

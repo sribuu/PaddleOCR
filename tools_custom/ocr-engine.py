@@ -390,7 +390,7 @@ class SribuuOCRTrainer(object):
                 valuesYaml = yaml.load(f, Loader=yaml.FullLoader)
             
             #Global
-            for key,val in valuesYaml.tiems():
+            for key,val in valuesYaml.items():
                 try:
                     tmp__ = hp.config[key]
                 except:

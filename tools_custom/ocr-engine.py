@@ -502,7 +502,12 @@ if __name__ == "__main__":
     hyperparams["epoch_num"] = 2
     hyperparams["algorithm"] = "LayoutXLM"
     hyperparams["optimizer_name"] = "AdamW"
-    hyperparams["loss_name"] = "VQASerTokenLayoutLMLoss"
+
+    if model != "RE":
+        hyperparams["loss_name"] = "VQASerTokenLayoutLMLoss"
+    else:
+        hyperparams["loss_name"] = "LossFromOutput"
+
     hyperparams["regularizer_name"] = "L2"
     hyperparams["lr_name"] = "Linear"
 

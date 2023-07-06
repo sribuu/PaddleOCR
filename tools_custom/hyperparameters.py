@@ -86,8 +86,12 @@ class HyperParameters(object):
         self.config["Loss"] = {}
 
         self.config["Loss"]["name"] = loss_name
-        self.config["Loss"]["key"] = key
 
+        if global_model != "RE":
+            self.config["Loss"]["key"] = key
+        else:
+            self.config["Loss"]["key"] = "loss"
+            
         if self.global_model in ["SER","ALL"]:
             self.config["Loss"]["num_classes"] = num_classes
         elif self.global_model == "RE":

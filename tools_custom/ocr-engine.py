@@ -345,20 +345,23 @@ class SribuuOCRTrainer(object):
                     best_metric
                 )
             )
-            
+
             #Write optimisation variables and result of the ith iteration
+            fn_optim = "%s/optimisation_model_%s.csv"%(self.model_dir, self.model)
             with open(
-                "%s/optimisation_model_%s.csv"%(self.model_dir, self.model),"a"
+                fn_optim,"a"
             ) as f:
                 f.write(
                     "%s,%s,%s,%s,%s\n"%(
                     beta1, beta2, learning_rate, regularizer_factor, best_metric
                 )
             )
+                
+            print(fn_optim)
             
             #Export model            
             df__ = pd.read_csv(
-                "%s/optimisation_model_%s.csv"%(self.model_dir, self.model)
+                fn_optim
             )
 
             past_best_metric = df__["metric"]
@@ -396,20 +399,24 @@ class SribuuOCRTrainer(object):
                     best_metric
                 )
             )
-
+                
+            
             #Write optimisation variables and result of the ith iteration
+            fn_optim = "%s/optimisation_model_%s.csv"%(self.model_dir, self.model)
             with open(
-                "%s/optimisation_model_%s.csv"%(self.model_dir, self.model),"a"
+                fn_optim,"a"
             ) as f:
                 f.write(
                     "%s,%s,%s,%s,%s\n"%(
                     beta1, beta2, learning_rate, regularizer_factor, best_metric
                 )
-            )
+            )                
+
+            print(fn_optim)
 
             #Export model by first reading the hyperparameter optimisation log, and see if the current metric is better than the ones recorded. If that's the case, then save the model.          
             df__ = pd.read_csv(
-                "%s/optimisation_model_%s.csv"%(self.model_dir, self.model),"a"
+                fn_optim
             )
 
             past_best_metric = df__["metric"]
@@ -418,9 +425,6 @@ class SribuuOCRTrainer(object):
             if len(past_best_metric)>0:
                 if best_metric >= past_best_metric.max():
                     self.export(hp)
-
-        #Free-ing GPU resources
-        free_GPU()
 
         #Return best_metric for the optimisaiton's objective function
         return best_metric
@@ -452,8 +456,8 @@ def free_GPU():
 if __name__ == "__main__":
     #FIXME: Add hyperparams for RE
     # for _ in 20000 maximise training metric by changing hyperparams
-    model_dir = '/home/philgun/Documents/sribuu/ocr/models/re'
-    useCPU = True
+    model_dir = '/home/models/20bb2d54-661f-440d-9dc8-80b1ed743435' #'/home/philgun/Documents/sribuu/ocr/models/re'
+    useCPU = False
 
     train_fraction = 0.6
     validation_fraction = 0.2
@@ -495,7 +499,7 @@ if __name__ == "__main__":
 
         optimised: beat1, beta2, learning_rate, regularizer_factor
     '''
-    hyperparams["epoch_num"] = 200
+    hyperparams["epoch_num"] = 2
     hyperparams["algorithm"] = "LayoutXLM"
     hyperparams["optimizer_name"] = "AdamW"
     hyperparams["loss_name"] = "VQASerTokenLayoutLMLoss"
@@ -550,6 +554,16 @@ if __name__ == "__main__":
     print(
         "Output best metric = %s"%(opt.max)
     )
+
+    #Free-ing GPU resources
+    print(
+        "Releasing GPU resources.......\n\n"
+    )
+    free_GPU()
+    print(
+        "Done releasing GPU.........\n\n"
+    )
+
 
 '''
         #Link the linking file

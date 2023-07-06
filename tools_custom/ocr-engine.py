@@ -241,6 +241,7 @@ class SribuuOCRTrainer(object):
         hp = HyperParameters(
             model_dir = self.model_dir,
             epoch_num = hyperparams["epoch_num"],
+            architecture_name = hyperparams['architecture_name'],
             global_model = hyperparams["global_model"],
             use_gpu = not self.useCPU,
             optimizer_name = hyperparams["optimizer_name"],
@@ -505,8 +506,10 @@ if __name__ == "__main__":
 
     if model != "RE":
         hyperparams["loss_name"] = "VQASerTokenLayoutLMLoss"
+        hyperparams['architecture_name'] = "LayoutXLMForSer"
     else:
         hyperparams["loss_name"] = "LossFromOutput"
+        hyperparams['architecture_name'] = "LayoutXLMForRe"
 
     hyperparams["regularizer_name"] = "L2"
     hyperparams["lr_name"] = "Linear"

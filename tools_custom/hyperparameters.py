@@ -91,7 +91,7 @@ class HyperParameters(object):
             self.config["Loss"]["key"] = key
         else:
             self.config["Loss"]["key"] = "loss"
-            
+
         if self.global_model in ["SER","ALL"]:
             self.config["Loss"]["num_classes"] = num_classes
         elif self.global_model == "RE":
@@ -102,6 +102,11 @@ class HyperParameters(object):
         self.config["Optimizer"]["name"] = optimizer_name
         self.config["Optimizer"]["beta1"] = beta1
         self.config["Optimizer"]["beta2"] = beta2
+        
+        if global_model == "RE":
+            self.config["Optimizer"]["clip_norm"] = 10
+            
+
         self.config["Optimizer"]["lr"] = {}
         self.config["Optimizer"]["lr"]["name"] = lr_name
         self.config["Optimizer"]["lr"]["learning_rate"] = learning_rate
@@ -113,14 +118,22 @@ class HyperParameters(object):
 
         #Populate PostProcess key
         self.config["PostProcess"] = {}
-        self.config["PostProcess"]["name"] = postprocess_name
+
+        if global_model == "RE":
+            self.config["PostProcess"]["name"] = 'VQAReTokenLayoutLMPostProcess'
+        else:
+            self.config["PostProcess"]["name"] = postprocess_name
+        
         
         if self.global_model in ["SER","ALL","RE"]:
             self.config["PostProcess"]["class_path"] = "%s/%s"%(model_dir,postprocess_class_path)
 
         #Populate Metric key
         self.config["Metric"] = {}
-        self.config["Metric"]["name"] = metric_name
+        if global_model == "RE":
+            self.config["Metric"]["name"] = "VQAReTokenMetric"
+        else:
+            self.config["Metric"]["name"] = metric_name
         self.config["Metric"]["main_indicator"] = metric_main_indicator
 
 

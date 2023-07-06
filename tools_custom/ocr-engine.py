@@ -389,54 +389,53 @@ class SribuuOCRTrainer(object):
             )
 
             #TESTING YAML
-            fn = "%s/algorithm_re.yml"%(self.model_dir)
-            with open(fn, 'r') as f:
-                valuesYaml = yaml.load(f, Loader=yaml.FullLoader)
-            
-            #Global
-            for key,val in valuesYaml.items():
-                try:
-                    tmp__ = hp.config[key]
-                except:
-                    raise KeyError(
-                        "No %s in hyperparams"%(key)
-                    )
-                for k,v in val.items():
-                    if key not in ["Train","Eval"]:
-                        try:
-                            print(
-                                "%s,%s,%s"%(
-                                    k, hp.config[key][k], v
-                                )
-                            )
-                        except Exception as e:
-                            print(str(e))
-                    
-            t_yml, e_yml = valuesYaml["Train"], valuesYaml["Eval"]
-            t_cfg, e_cfg = hp.config["Train"], hp.config["Eval"]
+            #fn = "%s/algorithm_re.yml"%(self.model_dir)
+            #with open(fn, 'r') as f:
+            #    valuesYaml = yaml.load(f, Loader=yaml.FullLoader)
+            #
+            ##Global
+            #for key,val in valuesYaml.items():
+            #    try:
+            #        tmp__ = hp.config[key]
+            #    except:
+            #        raise KeyError(
+            #            "No %s in hyperparams"%(key)
+            #        )
+            #    for k,v in val.items():
+            #        if key not in ["Train","Eval"]:
+            #            try:
+            #                print(
+            #                    "%s,%s,%s"%(
+            #                        k, hp.config[key][k], v
+            #                    )
+            #                )
+            #            except Exception as e:
+            #                print(str(e))
+            #        
+            #t_yml, e_yml = valuesYaml["Train"], valuesYaml["Eval"]
+            #t_cfg, e_cfg = hp.config["Train"], hp.config["Eval"]
 
-            print(
-                t_yml["dataset"]["name"], t_cfg["dataset"]["name"],"\n",
-                t_yml["dataset"]["data_dir"], t_cfg["dataset"]["data_dir"],"\n",
-                t_yml["dataset"]["label_file_list"], t_cfg["dataset"]["label_file_list"],"\n",
-                t_yml["dataset"]["ratio_list"], t_cfg["dataset"]["ratio_list"],"\n",
+            #print(
+            #    t_yml["dataset"]["name"], t_cfg["dataset"]["name"],"\n",
+            #    t_yml["dataset"]["data_dir"], t_cfg["dataset"]["data_dir"],"\n",
+            #    t_yml["dataset"]["label_file_list"], t_cfg["dataset"]["label_file_list"],"\n",
+            #    t_yml["dataset"]["ratio_list"], t_cfg["dataset"]["ratio_list"],"\n",
 
-                e_yml["dataset"]["name"], e_cfg["dataset"]["name"],"\n",
-                e_yml["dataset"]["data_dir"],e_cfg["dataset"]["data_dir"],"\n",
-                e_yml["dataset"]["label_file_list"], e_cfg["dataset"]["label_file_list"],"\n"
-            )
+            #    e_yml["dataset"]["name"], e_cfg["dataset"]["name"],"\n",
+            #    e_yml["dataset"]["data_dir"],e_cfg["dataset"]["data_dir"],"\n",
+            #    e_yml["dataset"]["label_file_list"], e_cfg["dataset"]["label_file_list"],"\n"
+            #)
 
-            t_trans_yml, e_trans_yml = valuesYaml["Train"]['dataset']['transforms'], valuesYaml["Eval"]['dataset']['transforms']
-            t_trans_cfg, e_trans_cfg = hp.config["Train"]['dataset']['transforms'], hp.config["Eval"]['dataset']['transforms']   
+            #t_trans_yml, e_trans_yml = valuesYaml["Train"]['dataset']['transforms'], valuesYaml["Eval"]['dataset']['transforms']
+            #t_trans_cfg, e_trans_cfg = hp.config["Train"]['dataset']['transforms'], hp.config["Eval"]['dataset']['transforms']   
+            #
+            #print(
+            #    "Transform train yml \n\n\n\n\n",t_trans_yml, "Transform train python \n\n\n\n\n", t_trans_cfg
+            #)
+            #print(
+            #    "Transform eval yml \n\n\n\n\n",e_trans_yml, "Transform eval python \n\n\n\n\n", e_trans_cfg
+            #)     
 
-            print(
-                "Transform train yml \n\n\n\n\n",t_trans_yml, "Transform train python \n\n\n\n\n", t_trans_cfg
-            )
-            print(
-                "Transform eval yml \n\n\n\n\n",e_trans_yml, "Transform eval python \n\n\n\n\n", e_trans_cfg
-            )     
-
-            
             #Calling program method and train RE model
             config, device, logger, vdl_writer = program.preprocess(is_train = not self.predict, flags_ = hp)
             seed = config['Global']['seed'] if 'seed' in config['Global'] else 1024
@@ -453,8 +452,7 @@ class SribuuOCRTrainer(object):
                     best_metric
                 )
             )
-                
-            
+                            
             #Write optimisation variables and result of the ith iteration
             fn_optim = "%s/optimisation_model_%s.csv"%(self.model_dir, self.model)
             with open(
@@ -466,7 +464,7 @@ class SribuuOCRTrainer(object):
                 )
             )                
 
-            print(fn_optim)
+            #print(fn_optim)
 
             #Export model by first reading the hyperparameter optimisation log, and see if the current metric is better than the ones recorded. If that's the case, then save the model.          
             df__ = pd.read_csv(
@@ -480,7 +478,7 @@ class SribuuOCRTrainer(object):
                 if best_metric >= past_best_metric.max():
                     self.export(hp)
 
-        #Return best_metric for the optimisaiton's objective function
+        #Return best_metric for the optimisation's objective function
         return best_metric
     
     def predict(self):
@@ -518,7 +516,7 @@ if __name__ == "__main__":
     test_fraction = 0.2
 
     #What model do you train?ALL
-    model = "RE"
+    model = "SER"
 
     trainer = SribuuOCRTrainer(
         model_dir = model_dir,

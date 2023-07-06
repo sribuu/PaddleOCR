@@ -385,7 +385,7 @@ class SribuuOCRTrainer(object):
             hp = self.read_hyperparameter(hyperparams)
 
             #TESTING YAML
-            fn = "/home/philgun/Documents/sribuu/ocr/models/invoice/algorithm_re.yml"
+            fn = "%s/algorithm_re.yml"%(self.model_dir)
             with open(fn, 'r') as f:
                 valuesYaml = yaml.load(f, Loader=yaml.FullLoader)
             
@@ -405,7 +405,7 @@ class SribuuOCRTrainer(object):
                             )
                         )
                     except Exception as e:
-                        print(e)
+                        print(str(e))
 
             #Calling program method and train RE model
             config, device, logger, vdl_writer = program.preprocess(is_train = not self.predict, flags_ = hp)

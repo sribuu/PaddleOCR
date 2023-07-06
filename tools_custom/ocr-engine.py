@@ -425,10 +425,9 @@ class SribuuOCRTrainer(object):
             t_trans_yml, e_trans_yml = valuesYaml["Train"]['dataset']['transforms'], valuesYaml["Eval"]['dataset']['transforms']
             t_trans_cfg, e_trans_cfg = hp.config["Train"]['dataset']['transforms'], hp.config["Eval"]['dataset']['transforms']        
 
-            for k,v in t_trans_yml["DecodeImage"].items():
-                print(
-                    k, t_trans_yml["DecodeImage"][k], t_trans_cfg["DecodeImage"][k]
-                )
+            print(
+                k, t_trans_yml["DecodeImage"], t_trans_cfg["DecodeImage"]
+            )
 
             for k,v in t_trans_yml["VQATokenLabelEncode"].items():
                 print(

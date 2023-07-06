@@ -80,7 +80,9 @@ class HyperParameters(object):
         self.config["Architecture"]["Backbone"]["pretrained"] = pretrained
         self.config["Architecture"]["Backbone"]["checkpoints"] = checkpoints
         self.config["Architecture"]["Backbone"]["mode"] = mode
-        self.config["Architecture"]["Backbone"]["num_classes"] = num_classes
+
+        if global_model != "RE":
+            self.config["Architecture"]["Backbone"]["num_classes"] = num_classes
 
         #Populate the Loss key
         self.config["Loss"] = {}
@@ -108,10 +110,13 @@ class HyperParameters(object):
             
 
         self.config["Optimizer"]["lr"] = {}
-        self.config["Optimizer"]["lr"]["name"] = lr_name
         self.config["Optimizer"]["lr"]["learning_rate"] = learning_rate
-        self.config["Optimizer"]["lr"]["epochs"] = epoch_num
         self.config["Optimizer"]["lr"]["warmup_epoch"] = warmup_epoch
+
+        if global_model != "RE":
+            self.config["Optimizer"]["lr"]["name"] = lr_name
+            self.config["Optimizer"]["lr"]["epochs"] = epoch_num
+
         self.config["Optimizer"]["regularizer"] = {}
         self.config["Optimizer"]["regularizer"]["name"] = regularizer_name
         self.config["Optimizer"]["regularizer"]["factor"] = regularizer_factor
@@ -125,7 +130,7 @@ class HyperParameters(object):
             self.config["PostProcess"]["name"] = postprocess_name
         
         
-        if self.global_model in ["SER","ALL","RE"]:
+        if self.global_model in ["SER","ALL"]:
             self.config["PostProcess"]["class_path"] = "%s/%s"%(model_dir,postprocess_class_path)
 
         #Populate Metric key

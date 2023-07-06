@@ -151,7 +151,7 @@ class HyperParameters(object):
 
         else: #for RE model
             #Read the entities
-            fn_key = "%s/label-key-list.txt"
+            fn_key = "%s/label-key-list.txt"%(model_dir)
             entities_labels = {}
             counter = 0
 

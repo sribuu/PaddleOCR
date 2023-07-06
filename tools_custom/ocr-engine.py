@@ -398,7 +398,7 @@ class SribuuOCRTrainer(object):
                         "No %s in hyperparams"%(key)
                     )
                 for k,v in val.items():
-                    if k not in ["Train","Eval"]:
+                    if key not in ["Train","Eval"]:
                         try:
                             print(
                                 "%s,%s,%s"%(
@@ -422,8 +422,8 @@ class SribuuOCRTrainer(object):
                 e_yml["dataset"]["label_file_list"], e_cfg["dataset"]["label_file_list"],"\n"
             )
 
-            t_trans_yml, e_trans_yml = valuesYaml["Train"]['transforms'], valuesYaml["Eval"]['transforms']
-            t_trans_cfg, e_trans_cfg = hp.config["Train"]['transforms'], hp.config["Eval"]['transforms']        
+            t_trans_yml, e_trans_yml = valuesYaml["Train"]['dataset']['transforms'], valuesYaml["Eval"]['dataset']['transforms']
+            t_trans_cfg, e_trans_cfg = hp.config["Train"]['dataset']['transforms'], hp.config["Eval"]['dataset']['transforms']        
 
             for k,v in t_trans_yml["DecodeImage"].items():
                 print(

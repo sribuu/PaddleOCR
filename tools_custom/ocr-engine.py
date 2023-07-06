@@ -375,7 +375,7 @@ class SribuuOCRTrainer(object):
             #Tricky thing is that if user wants to do "ALL" training, then this part of the code is only for SER, that's why I hardcoded SER here
             if self.model == "ALL":
                 self.model = "RE"
-                
+
             #RE model training
             print("== Training %s Model"%(self.model))
 
@@ -464,7 +464,7 @@ if __name__ == "__main__":
     test_fraction = 0.2
 
     #What model do you train?ALL
-    model = "ALL"
+    model = "RE"
 
     trainer = SribuuOCRTrainer(
         model_dir = model_dir,

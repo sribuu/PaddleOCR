@@ -111,7 +111,7 @@ class HyperParameters(object):
         self.config["PostProcess"] = {}
         self.config["PostProcess"]["name"] = postprocess_name
         
-        if self.global_model in ["SER","ALL"]:
+        if self.global_model in ["SER","ALL","RE"]:
             self.config["PostProcess"]["class_path"] = "%s/%s"%(model_dir,postprocess_class_path)
 
         #Populate Metric key

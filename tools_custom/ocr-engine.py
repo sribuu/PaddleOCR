@@ -479,16 +479,7 @@ class SribuuOCRTrainer(object):
                     self.export(hp)
 
         #Return best_metric for the optimisation's objective function
-        return best_metric
-    
-    def predict(self):
-        '''Predict from the final trained-model'''
-        pass
-
-    def infer(self):
-        '''Predict from the model checkpoints'''
-        pass
-        
+        return best_metric    
 
 def create_log_optimisation(model_dir, model):
     #File to store hyperparameter optimisation
@@ -504,10 +495,56 @@ def free_GPU():
     cuda.select_device(0)
     cuda.close()
 
+def predict(
+        absolute_path_path_to_predict_folder, 
+        model_dir,
+        predict_file
+    ):
+    '''
+    Still using subprocess because dissecting the PPOCR-native predict script risks changing the package :(
+        path_to_predict_folder: path to the folder in which predict_kie_token_ser_re.py and predict_kie_token_ser.py are hosted
+        model_dir: path to the directory where the trained models are hosted
+    '''
+    #Text formatting
+    predict_script = "%s/predict_kie_token_ser_re.py"%(absolute_path_path_to_predict_folder)
+    predict_ser_script = "%s/predict_kie_token_ser.py"%(absolute_path_path_to_predict_folder)
+    model_compiled_re = "%s/model_compiled/re"%(model_dir)
+    model_compiled_ser = "%s/model_compiled/ser"%(model_dir)
+
+    #If both SER and RE model are found -- predict using both
+    if os.path.isdir(model_compiled_re) and os.path.isdir(model_compiled_ser):
+        subprocess.run([
+            "python3",
+            predict_script,
+            "--kie_algorithm=LayoutXLM",
+            f"--re_model_dir={model_compiled_re}",
+            f"--ser_model_dir={model_compiled_ser}",
+            "--use_visual_backbone=False",
+            f"--image_dir={predict_file}",
+            "--ser_dict_path=%s/label-key-list.txt"%(model_dir),
+            "--vis_font_path=visual_font",
+            "--ocr_order_method=tb-yx"
+        ])
+    #If not: SER prediction only
+    else:
+        subprocess.run([
+            "python3",
+            predict_ser_script,
+            "--kie_algorithm=LayoutXLM",
+            f"--ser_model_dir={model_compiled_re}",
+            "--use_visual_backbone=False",
+            f"--image_dir={predict_file}",
+            "--ser_dict_path=%s/label-key-list.txt"%(model_dir),
+            "--vis_font_path=visual_font",
+            "--ocr_order_method=tb-yx"
+        ])
+
+def predict_checkpoint():
+    #What does it do? Why predict using checkpoint model, not waiting until we finish training? For sure we won't use the "partly-trained" model
+    pass
 
 if __name__ == "__main__":
     #FIXME: Add hyperparams for RE
-    # for _ in 20000 maximise training metric by changing hyperparams
     model_dir = '/home/models/20bb2d54-661f-440d-9dc8-80b1ed743435' #'/home/philgun/Documents/sribuu/ocr/models/re'
     useCPU = False
 
@@ -565,20 +602,13 @@ if __name__ == "__main__":
     hyperparams["regularizer_name"] = "L2"
     hyperparams["lr_name"] = "Linear"
 
-    '''
-    hyperparams["beta1"] = 0.9
-    hyperparams["beta2"] = 0.999
-    hyperparams["learning_rate"] = 5e-5
-    hyperparams["regularizer_factor"] = 0.0
-    '''
-
     #Instantiate partial obj function, where hyperparams is left off for optimisation routine
     objfunc = functools.partial(
         trainer.fit, hyperparams = hyperparams, model=model, 
         train_fraction=train_fraction, validation_fraction=validation_fraction, test_fraction=test_fraction
     )
 
-    #Instantiate the training parameters
+    #Instantiate the hyperparameters bound
     parameterbounds = {
         'beta1':(0.8,0.95),
         'beta2':(0.9,0.95),
@@ -594,7 +624,7 @@ if __name__ == "__main__":
         random_state=42
     )
 
-    #Star bayesian optimiser
+    #Start bayesian optimiser
     start_time = time.time()
     
     opt.maximize(init_points=1,n_iter=1)
@@ -602,13 +632,6 @@ if __name__ == "__main__":
     delta = time.time() - start_time
 
     print("Total time for bayesian optimisation: %s s"%delta)
-
-    '''
-    #Catch training metric
-    best_metric = trainer.fit(
-        model=model, hyperparams = hyperparams
-    )
-    '''
 
     print(
         "Output best metric = %s"%(opt.max)
@@ -618,7 +641,9 @@ if __name__ == "__main__":
     print(
         "Releasing GPU resources.......\n\n"
     )
+
     free_GPU()
+    
     print(
         "Done releasing GPU.........\n\n"
     )
@@ -674,7 +699,8 @@ if __name__ == "__main__":
             if not predict_file:
                 print("Error: The file to predict is required")
                 exit(1)
-
+            
+            #Predict normal
             if predict_infer == "false":
                 if os.path.isdir(model_compiled_re) and os.path.isdir(model_compiled_ser):
                     subprocess.run([
@@ -701,6 +727,8 @@ if __name__ == "__main__":
                         "--vis_font_path=visual_font",
                         "--ocr_order_method=tb-yx"
                     ])
+            
+            #Predict cp
             else:
                 if os.path.isdir(model_checkpoint_re) and os.path.isdir(model_checkpoint_ser):
                     subprocess.run([

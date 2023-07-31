@@ -91,7 +91,7 @@ def genDetRecTrainVal(args):
     recValTxt = open(os.path.join(args.recRootPath, "val.txt"), "a", encoding="UTF-8")
     recTestTxt = open(os.path.join(args.recRootPath, "test.txt"), "a", encoding="UTF-8")
 
-    splitTrainVal(args, args.datasetRootPath, detAbsTrainRootPath, detAbsValRootPath, detAbsTestRootPath, detTrainTxt, detValTxt,
+    splitTrainVal(args,args.datasetRootPath, detAbsTrainRootPath, detAbsValRootPath, detAbsTestRootPath, detTrainTxt, detValTxt,
                   detTestTxt, "det")
     
     current_directory = args.datasetRootPath
@@ -102,7 +102,7 @@ def genDetRecTrainVal(args):
     for root, dirs, files in os.walk(current_directory):
         for dir in dirs:
             if dir == 'crop_img':
-                splitTrainVal(args, root, recAbsTrainRootPath, recAbsValRootPath, recAbsTestRootPath, recTrainTxt, recValTxt,
+                splitTrainVal(args,root, recAbsTrainRootPath, recAbsValRootPath, recAbsTestRootPath, recTrainTxt, recValTxt,
                               recTestTxt, "rec")
             else:
                 continue

@@ -95,6 +95,9 @@ class SribuuOCRTrainer(object):
 
         #Model dir
         self.model_dir = model_dir
+
+        #avoid regenerate existing data
+        self.is_prepared = False
     
     def unpack_utilities_file(self):
         '''
@@ -299,32 +302,35 @@ class SribuuOCRTrainer(object):
         self.model = model
 
         print("== TRAINING ==")
-        print("== Generating id and linking the dataset label based on the linking file")
 
-        #Unpack utilities
-        self.unpack_utilities_file()
+        if not self.is_prepared:
+            print("== Generating id and linking the dataset label based on the linking file")
 
-        self.reformat_label_list()
+            #Unpack utilities
+            self.unpack_utilities_file()
 
-        #Linking files
-        self.link_file()
+            self.reformat_label_list()
 
-        #Generating rec cropped image
-        print("== Generate Rec Cropped Img")
-        self.gen_cropped_img()
+            #Linking files
+            self.link_file()
 
-        #Splitting data set
-        print("== Splitting dataset")
-        self.split_data(train_fraction, validation_fraction, test_fraction)
+            #Generating rec cropped image
+            print("== Generate Rec Cropped Img")
+            self.gen_cropped_img()
 
-        #Count number of classes
-        with open("%s/label-key-list.txt"%(self.model_dir), 'r') as f:
-            num_count = len([line for line in f if line.strip()])
+            #Splitting data set
+            print("== Splitting dataset")
+            self.split_data(train_fraction, validation_fraction, test_fraction)
 
-        #Updating the number classes
-        self.num_classes = (2 * num_count) - 1
-        print("== Update num_classes to %s"%(self.num_classes))
+            #Count number of classes
+            with open("%s/label-key-list.txt"%(self.model_dir), 'r') as f:
+                num_count = len([line for line in f if line.strip()])
 
+            #Updating the number classes
+            self.num_classes = (2 * num_count) - 1
+            print("== Update num_classes to %s"%(self.num_classes))
+    
+            self.is_prepared = True
         #Instantiate hyperparameters dict
         hyperparams["num_classes"] = self.num_classes
         
@@ -684,7 +690,7 @@ if __name__ == "__main__":
 
         optimised: beat1, beta2, learning_rate, regularizer_factor
     '''
-    hyperparams["epoch_num"] = 2
+    hyperparams["epoch_num"] = 200
     hyperparams["algorithm"] = "LayoutXLM"
     hyperparams["optimizer_name"] = "AdamW"
 
@@ -723,7 +729,7 @@ if __name__ == "__main__":
     #Start bayesian optimiser
     start_time = time.time()
     
-    opt.maximize(init_points=1,n_iter=1)
+    opt.maximize(init_points=5,n_iter=50)
     
     delta = time.time() - start_time
 

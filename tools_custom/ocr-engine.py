@@ -66,6 +66,11 @@ from bayes_opt import BayesianOptimization as BO
 
 from numba import cuda
 
+#Import s3 bucket
+import boto3
+from dotenv import load_dotenv
+
+
 class SribuuOCRTrainer(object):
     '''
         Class abstraction for Trainer to train the OCR model
@@ -559,9 +564,81 @@ def predict_checkpoint():
     #What does it do? Why predict using checkpoint model, not waiting until we finish training? For sure we won't use the "partly-trained" model
     pass
 
+def data_downloader(s3,file_name_in_bucket,file_name_local,force_download=False):
+    bucket_name = 'business-ocr-image'
+
+    parent_path = os.path.dirname(file_name_local)
+    if not os.path.exists(parent_path):
+        os.makedirs(parent_path)
+    # Memeriksa apakah file sudah ada di lokal sebelum mendownload
+    if not os.path.exists(file_name_local) or force_download:
+        # Mendownload file dari bucket S3
+        try:
+            s3.download_file(bucket_name, file_name_in_bucket, file_name_local)
+            return file_name_local
+        except Exception as e:
+            print(f"Gagal mendownload {file_name_in_bucket}. Terjadi kesalahan: {e}")  
+
+def fetch_dataset(model_dir,model_id):
+    #Fetch dataset from S3 bucket based on list of data in Label.txt for selected model_id
+    dotenv_path = os.path.join(os.path.dirname(__file__), '.env')  # Ganti dengan path sesuai lokasi file .env
+
+    # Memuat variabel dari file .env sesuai dengan path yang ditentukan
+    load_dotenv(dotenv_path=dotenv_path)
+
+    # Menggunakan os.getenv untuk mengambil nilai variabel dari file .env
+    aws_access_key_id = os.environ.get('AWS_ACCESS_KEY')
+    aws_secret_access_key = os.environ.get('AWS_SECRET_KEY')
+
+    # Membuat koneksi ke bucket S3 menggunakan kredensial
+    s3 = boto3.client('s3',
+                    region_name='ap-southeast-3',
+                    aws_access_key_id=aws_access_key_id,
+                    aws_secret_access_key=aws_secret_access_key)
+    label_file_bucket = f"{model_id}/Label.txt"
+    label_file_local = f"{model_dir}{model_id}/Label.txt"
+    
+    label_file = data_downloader(s3=s3,file_name_in_bucket=label_file_bucket,file_name_local=label_file_local,force_download=True)
+
+    label_key_file_bucket = f"{model_id}/label-key-list.txt"
+    label_key_file_local = f"{model_dir}{model_id}/label-key-list.txt"
+    data_downloader(s3=s3,file_name_in_bucket=label_key_file_bucket,file_name_local=label_key_file_local,force_download=True)
+    
+    label_dict = {}
+    with open(label_file) as f:
+        for line in f:
+            #Read each line and turn into key value pair dict    
+            splitted = line.split("\t", 1)
+
+            if(len(splitted)<2):
+                splitted = line.split("g [",1)
+                filename_bucket = f"{splitted[0]}g"
+                label_dict[filename_bucket] = f"[{splitted[1]}"
+            else:
+                filename_bucket = splitted[0]
+                label_dict[filename_bucket] = splitted[1]
+            
+            filename_local = f"{model_dir}{filename_bucket}"
+            data_downloader(s3=s3,file_name_in_bucket=filename_bucket,file_name_local=filename_local)
+    
+    text = "\n".join([f"{key}\t{value}" for key, value in label_dict.items()])
+
+    print(f"Dataset total to be trained: {len(label_dict.items())}")
+
+    # write the text to a file
+    with open(label_file_local, "w") as f:
+        f.write(text+"\n")
+
 if __name__ == "__main__":
     #FIXME: Add hyperparams for RE
-    model_dir = "/home/models/{model_id}" #f'/home/models/{modelId}'
+    # INVOICE : 7a81e532-af43-4e8c-af67-dcdedb778e96
+    # RECEIPT : a0c1e53d-5bec-4e0d-aaee-71b28936181a
+    # ESTATEMENT : 509b4e5d-d470-4eec-bbdf-59daf50af631
+    # PURCHASE_ORDER : 20bb2d54-661f-440d-9dc8-80b1ed743435
+
+    model_id = "7a81e532-af43-4e8c-af67-dcdedb778e96"
+    model_dir_only = '/Users/ariefwijaya/Documents/ARIEFW/Project/PaddleFile/models_test/' #"/home/models_test/"
+    model_dir = f"${model_dir_only}{model_id}"
     useCPU = False
 
     train_fraction = 0.7
@@ -571,6 +648,8 @@ if __name__ == "__main__":
     #What model do you train?ALL
     model = "SER"
 
+    fetch_dataset(model_dir=model_dir_only,model_id=model_id)
+    exit()
     trainer = SribuuOCRTrainer(
         model_dir = model_dir,
         trainResume = None,

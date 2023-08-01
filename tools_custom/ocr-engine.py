@@ -638,7 +638,7 @@ if __name__ == "__main__":
 
     model_id = "509b4e5d-d470-4eec-bbdf-59daf50af631"
     model_dir_only = "/home/models/"
-    model_dir = f"${model_dir_only}{model_id}"
+    model_dir = f"{model_dir_only}{model_id}"
     useCPU = False
 
     train_fraction = 0.7

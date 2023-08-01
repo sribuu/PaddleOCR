@@ -636,8 +636,8 @@ if __name__ == "__main__":
     # ESTATEMENT : 509b4e5d-d470-4eec-bbdf-59daf50af631
     # PURCHASE_ORDER : 20bb2d54-661f-440d-9dc8-80b1ed743435
 
-    model_id = "7a81e532-af43-4e8c-af67-dcdedb778e96"
-    model_dir_only = '/Users/ariefwijaya/Documents/ARIEFW/Project/PaddleFile/models_test/' #"/home/models_test/"
+    model_id = "509b4e5d-d470-4eec-bbdf-59daf50af631"
+    model_dir_only = "/home/models/"
     model_dir = f"${model_dir_only}{model_id}"
     useCPU = False
 
@@ -648,8 +648,9 @@ if __name__ == "__main__":
     #What model do you train?ALL
     model = "SER"
 
-    fetch_dataset(model_dir=model_dir_only,model_id=model_id)
-    exit()
+    #Disable this temporary to avoid replace existing dataset
+    # fetch_dataset(model_dir=model_dir_only,model_id=model_id)
+
     trainer = SribuuOCRTrainer(
         model_dir = model_dir,
         trainResume = None,

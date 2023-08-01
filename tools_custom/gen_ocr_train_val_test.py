@@ -17,9 +17,11 @@ def isCreateOrDeleteFolder(path, flag):
     return flagAbsPath
 
 
-def splitTrainVal(root, absTrainRootPath, absValRootPath, absTestRootPath, trainTxt, valTxt, testTxt, flag):
+def splitTrainVal(args,root, absTrainRootPath, absValRootPath, absTestRootPath, trainTxt, valTxt, testTxt, flag):
     # 按照指定的比例划分训练集、验证集、测试集
-    dataAbsPath = os.path.abspath(root)
+    #dataAbsPath = os.path.abspath(root)
+    #Change to the local folder where model is hosted
+    dataAbsPath = args.model_dir
 
     if flag == "det":
         labelFilePath = os.path.join(dataAbsPath, args.detLabelFileName)
@@ -89,7 +91,7 @@ def genDetRecTrainVal(args):
     recValTxt = open(os.path.join(args.recRootPath, "val.txt"), "a", encoding="UTF-8")
     recTestTxt = open(os.path.join(args.recRootPath, "test.txt"), "a", encoding="UTF-8")
 
-    splitTrainVal(args.datasetRootPath, detAbsTrainRootPath, detAbsValRootPath, detAbsTestRootPath, detTrainTxt, detValTxt,
+    splitTrainVal(args,args.datasetRootPath, detAbsTrainRootPath, detAbsValRootPath, detAbsTestRootPath, detTrainTxt, detValTxt,
                   detTestTxt, "det")
     
     current_directory = args.datasetRootPath
@@ -100,7 +102,7 @@ def genDetRecTrainVal(args):
     for root, dirs, files in os.walk(current_directory):
         for dir in dirs:
             if dir == 'crop_img':
-                splitTrainVal(root, recAbsTrainRootPath, recAbsValRootPath, recAbsTestRootPath, recTrainTxt, recValTxt,
+                splitTrainVal(args,root, recAbsTrainRootPath, recAbsValRootPath, recAbsTestRootPath, recTrainTxt, recValTxt,
                               recTestTxt, "rec")
             else:
                 continue

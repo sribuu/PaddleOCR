@@ -176,11 +176,15 @@ def main(config, device, logger, vdl_writer):
 
     if config['Global']['distributed']:
         model = paddle.DataParallel(model)
+
     # start train
-    program.train(config, train_dataloader, valid_dataloader, device, model,
-                  loss_class, optimizer, lr_scheduler, post_process_class,
-                  eval_class, pre_best_model_dict, logger, vdl_writer, scaler,
-                  amp_level, amp_custom_black_list)
+    best_metric = program.train(
+        config, train_dataloader, valid_dataloader, device, model,
+        loss_class, optimizer, lr_scheduler, post_process_class,
+        eval_class, pre_best_model_dict, logger, vdl_writer, scaler,
+        amp_level, amp_custom_black_list
+    )
+    return best_metric
 
 
 def test_reader(config, device, logger):
@@ -205,5 +209,5 @@ if __name__ == '__main__':
     config, device, logger, vdl_writer = program.preprocess(is_train=True)
     seed = config['Global']['seed'] if 'seed' in config['Global'] else 1024
     set_seed(seed)
-    main(config, device, logger, vdl_writer)
+    best_metric = main(config, device, logger, vdl_writer)
     # test_reader(config, device, logger)

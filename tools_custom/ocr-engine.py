@@ -128,7 +128,16 @@ class SribuuOCRTrainer(object):
         with open(self.label_file) as f:
             for line in f:
                 #Read each line and turn into key value pair dict    
-                command, description = line.split("\t", 1)
+                splitted = line.split("\t", 1)
+
+                #Handling wrong format from BE
+                if(len(splitted)<2):
+                    splitted = line.split("g [",1)
+                    command = f"{splitted[0]}g"
+                    description = f"[{splitted[1]}"
+                else:
+                    command = splitted[0]
+                    description = splitted[1]
     
                 self.linking_dict[command] = description.strip()
                 self.linking_dictRE[command] = description.strip()

@@ -537,8 +537,8 @@ def allocate_gpu_memory():
     # Pilih ID GPU yang ingin Anda alokasikan memori
     gpu_id = 0
 
-    # Alokasikan memori pada GPU yang dipilih
-    paddle.fluid.set_device('gpu:%d' % gpu_id)
+    # Inisialisasi PaddlePaddle dengan penggunaan GPU
+    place = paddle.set_device('gpu:%d' % gpu_id)
 
 def deallocate_gpu_memory():
     # Bebaskan memori yang tidak terpakai pada GPU yang telah dialokasikan sebelumnya

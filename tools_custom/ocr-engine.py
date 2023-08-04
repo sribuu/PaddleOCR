@@ -533,13 +533,12 @@ def create_log_optimisation(model_dir, model):
 
 def allocate_gpu_memory():
    # Alokasikan memori pada GPU
-    cp.cuda.runtime.setDevice(0)
     cp.cuda.Device(0).use()
     print("GPU Memory Allocated")
 
 def deallocate_gpu_memory():
     # Bebaskan memori GPU
-    cp.get_default_memory_pool().free_all_blocks()
+    cp.cuda.Device().free_memory()
     print("GPU Memory Deallocated")
 
 def free_GPU():

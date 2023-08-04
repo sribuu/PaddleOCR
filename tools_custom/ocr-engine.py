@@ -536,6 +536,7 @@ def allocate_gpu_memory():
     with cp.cuda.Device(0):
         mempool.set_limit(size=4*1024**3)  # 2 GiB
     print("GPU Memory Allocated")
+    return mempool
 
 def deallocate_gpu_memory(mempool):
     # Bebaskan memori GPU

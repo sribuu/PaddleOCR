@@ -370,7 +370,7 @@ class SribuuOCRTrainer(object):
             hp = self.read_hyperparameter(hyperparams)
             
             #Calling program method and traing SER model
-            config, device__, logger, vdl_writer = program.preprocess(is_train = not self.predict, flags_ = hp)
+            config, device, logger, vdl_writer = program.preprocess(is_train = not self.predict, flags_ = hp)
             seed = config['Global']['seed'] if 'seed' in config['Global'] else 1024
             set_seed(seed)
 

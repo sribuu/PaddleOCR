@@ -311,8 +311,6 @@ class SribuuOCRTrainer(object):
         #What model do you want to train
         self.model = model
         
-        mempool = allocate_gpu_memory()  # Alokasikan memori GPU sebelum pelatihan
-        
         print("== TRAINING ==")
 
         if not self.is_prepared:
@@ -518,8 +516,6 @@ class SribuuOCRTrainer(object):
                     self.export(hp)
 
         #Return best_metric for the optimisation's objective function
-        deallocate_gpu_memory(mempool)  # Dealokasikan memori GPU setelah pelatihan
-
         return best_metric    
 
 def create_log_optimisation(model_dir, model):
@@ -530,18 +526,6 @@ def create_log_optimisation(model_dir, model):
         f.write(
             "beta1,beta2,learning_rate,regularizer_factor,metric\n"
         )
-
-def allocate_gpu_memory():
-    mempool = cp.get_default_memory_pool()
-    with cp.cuda.Device(0):
-        mempool.set_limit(size=4*1024**3)  # 2 GiB
-    print("GPU Memory Allocated")
-    return mempool
-
-def deallocate_gpu_memory(mempool):
-    # Bebaskan memori GPU
-    mempool.free_all_blocks()
-    print("GPU Memory Deallocated")
 
 def free_GPU():
     #Free-ing GPU resources

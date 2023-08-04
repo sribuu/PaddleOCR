@@ -667,6 +667,8 @@ def fetch_dataset(model_dir,model_id):
         f.write(text+"\n")
 
 if __name__ == "__main__":
+    #Free GPU before start. Probaby will be removed later
+    free_GPU()
     #FIXME: Add hyperparams for RE
     # INVOICE : 7a81e532-af43-4e8c-af67-dcdedb778e96
     # RECEIPT : a0c1e53d-5bec-4e0d-aaee-71b28936181a

@@ -538,11 +538,11 @@ def allocate_gpu_memory():
     gpu_id = 0
 
     # Alokasikan memori pada GPU yang dipilih
-    fluid.cuda.set_device(gpu_id)
+    paddle.fluid.set_device('gpu:%d' % gpu_id)
 
 def deallocate_gpu_memory():
     # Bebaskan memori yang tidak terpakai pada GPU yang telah dialokasikan sebelumnya
-    fluid.cuda.empty_cache()
+    paddle.fluid.core.paddle_clear_lms_cache()
 
 def free_GPU():
     #Free-ing GPU resources

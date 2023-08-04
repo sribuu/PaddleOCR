@@ -310,7 +310,7 @@ class SribuuOCRTrainer(object):
         #What model do you want to train
         self.model = model
         
-        allocate_gpu_memory()  # Alokasikan memori GPU sebelum pelatihan
+        allocate_gpu_memory(self)  # Alokasikan memori GPU sebelum pelatihan
         
         print("== TRAINING ==")
 
@@ -517,7 +517,7 @@ class SribuuOCRTrainer(object):
                     self.export(hp)
 
         #Return best_metric for the optimisation's objective function
-        deallocate_gpu_memory()  # Dealokasikan memori GPU setelah pelatihan
+        deallocate_gpu_memory(self)  # Dealokasikan memori GPU setelah pelatihan
 
         return best_metric    
 

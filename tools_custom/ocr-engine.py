@@ -71,6 +71,8 @@ import cupy as cp
 import boto3
 from dotenv import load_dotenv
 
+import paddle.fluid as fluid
+
 
 class SribuuOCRTrainer(object):
     '''
@@ -311,6 +313,8 @@ class SribuuOCRTrainer(object):
         #What model do you want to train
         self.model = model
         
+        allocate_gpu_memory()  # Alokasikan memori GPU sebelum pelatihan
+        
         print("== TRAINING ==")
 
         if not self.is_prepared:
@@ -516,6 +520,8 @@ class SribuuOCRTrainer(object):
                     self.export(hp)
 
         #Return best_metric for the optimisation's objective function
+        deallocate_gpu_memory()  # Dealokasikan memori GPU setelah pelatihan
+
         return best_metric    
 
 def create_log_optimisation(model_dir, model):
@@ -526,6 +532,17 @@ def create_log_optimisation(model_dir, model):
         f.write(
             "beta1,beta2,learning_rate,regularizer_factor,metric\n"
         )
+
+def allocate_gpu_memory():
+    # Pilih ID GPU yang ingin Anda alokasikan memori
+    gpu_id = 0
+
+    # Alokasikan memori pada GPU yang dipilih
+    fluid.cuda.set_device(gpu_id)
+
+def deallocate_gpu_memory():
+    # Bebaskan memori yang tidak terpakai pada GPU yang telah dialokasikan sebelumnya
+    fluid.cuda.empty_cache()
 
 def free_GPU():
     #Free-ing GPU resources

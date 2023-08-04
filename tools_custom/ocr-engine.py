@@ -65,6 +65,7 @@ import functools
 from bayes_opt import BayesianOptimization as BO
 
 from numba import cuda
+import cupy as cp
 
 #Import s3 bucket
 import boto3
@@ -310,7 +311,7 @@ class SribuuOCRTrainer(object):
         #What model do you want to train
         self.model = model
         
-        allocate_gpu_memory(self)  # Alokasikan memori GPU sebelum pelatihan
+        allocate_gpu_memory()  # Alokasikan memori GPU sebelum pelatihan
         
         print("== TRAINING ==")
 
@@ -369,7 +370,7 @@ class SribuuOCRTrainer(object):
             hp = self.read_hyperparameter(hyperparams)
             
             #Calling program method and traing SER model
-            config, device, logger, vdl_writer = program.preprocess(is_train = not self.predict, flags_ = hp)
+            config, device__, logger, vdl_writer = program.preprocess(is_train = not self.predict, flags_ = hp)
             seed = config['Global']['seed'] if 'seed' in config['Global'] else 1024
             set_seed(seed)
 
@@ -517,7 +518,7 @@ class SribuuOCRTrainer(object):
                     self.export(hp)
 
         #Return best_metric for the optimisation's objective function
-        deallocate_gpu_memory(self)  # Dealokasikan memori GPU setelah pelatihan
+        deallocate_gpu_memory()  # Dealokasikan memori GPU setelah pelatihan
 
         return best_metric    
 
@@ -530,13 +531,16 @@ def create_log_optimisation(model_dir, model):
             "beta1,beta2,learning_rate,regularizer_factor,metric\n"
         )
 
-def allocate_gpu_memory(self):
-    cuda.select_device(0)  # Pilih GPU yang akan digunakan (misalnya, GPU dengan indeks 0)
-    cuda.close()  # Bebaskan semua sumber daya GPU sebelum alokasi
+def allocate_gpu_memory():
+   # Alokasikan memori pada GPU
+    cp.cuda.runtime.setDevice(0)
+    cp.cuda.Device(0).use()
+    print("GPU Memory Allocated")
 
-def deallocate_gpu_memory(self):
-    cuda.select_device(0)  # Pilih GPU yang akan digunakan (misalnya, GPU dengan indeks 0)
-    cuda.close()  # Bebaskan semua sumber daya GPU setelah pelatihan selesai
+def deallocate_gpu_memory():
+    # Bebaskan memori GPU
+    cp.get_default_memory_pool().free_all_blocks()
+    print("GPU Memory Deallocated")
 
 def free_GPU():
     #Free-ing GPU resources
@@ -718,7 +722,7 @@ if __name__ == "__main__":
 
         optimised: beat1, beta2, learning_rate, regularizer_factor
     '''
-    hyperparams["epoch_num"] = 110
+    hyperparams["epoch_num"] = 1
     hyperparams["algorithm"] = "LayoutXLM"
     hyperparams["optimizer_name"] = "AdamW"
 

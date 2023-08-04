@@ -138,10 +138,10 @@ class SribuuOCRTrainer(object):
                 else:
                     command = splitted[0]
                     description = splitted[1]
-    
+                
                 self.linking_dict[command] = description.strip()
                 self.linking_dictRE[command] = description.strip()
-    
+
                 for key, values in self.linking_dict.items():
                     temp = json.loads(values)  # temporary store array values from dict
                     while_count = 1  # counting from 1, allowing us to remove element if needed
@@ -309,7 +309,9 @@ class SribuuOCRTrainer(object):
         '''
         #What model do you want to train
         self.model = model
-
+        
+        allocate_gpu_memory()  # Alokasikan memori GPU sebelum pelatihan
+        
         print("== TRAINING ==")
 
         if not self.is_prepared:
@@ -515,6 +517,8 @@ class SribuuOCRTrainer(object):
                     self.export(hp)
 
         #Return best_metric for the optimisation's objective function
+        deallocate_gpu_memory()  # Dealokasikan memori GPU setelah pelatihan
+
         return best_metric    
 
 def create_log_optimisation(model_dir, model):
@@ -526,10 +530,25 @@ def create_log_optimisation(model_dir, model):
             "beta1,beta2,learning_rate,regularizer_factor,metric\n"
         )
 
+def allocate_gpu_memory(self):
+    cuda.select_device(0)  # Pilih GPU yang akan digunakan (misalnya, GPU dengan indeks 0)
+    cuda.close()  # Bebaskan semua sumber daya GPU sebelum alokasi
+
+def deallocate_gpu_memory(self):
+    cuda.select_device(0)  # Pilih GPU yang akan digunakan (misalnya, GPU dengan indeks 0)
+    cuda.close()  # Bebaskan semua sumber daya GPU setelah pelatihan selesai
+
 def free_GPU():
+    #Free-ing GPU resources
+    print(
+        "Releasing GPU resources.......\n\n"
+    )
     #Method to kill all processes running on GPU and free GPU resources
     cuda.select_device(0)
     cuda.close()
+    print(
+        "Done releasing GPU.........\n\n"
+    )
 
 def predict(
         absolute_path_path_to_predict_folder, 
@@ -651,7 +670,7 @@ if __name__ == "__main__":
     # ESTATEMENT : 509b4e5d-d470-4eec-bbdf-59daf50af631
     # PURCHASE_ORDER : 20bb2d54-661f-440d-9dc8-80b1ed743435
 
-    model_id = "509b4e5d-d470-4eec-bbdf-59daf50af631"
+    model_id = "a0c1e53d-5bec-4e0d-aaee-71b28936181a"
     model_dir_only = "/home/models/"
     model_dir = f"{model_dir_only}{model_id}"
     useCPU = False
@@ -699,7 +718,7 @@ if __name__ == "__main__":
 
         optimised: beat1, beta2, learning_rate, regularizer_factor
     '''
-    hyperparams["epoch_num"] = 200
+    hyperparams["epoch_num"] = 110
     hyperparams["algorithm"] = "LayoutXLM"
     hyperparams["optimizer_name"] = "AdamW"
 
@@ -738,7 +757,7 @@ if __name__ == "__main__":
     #Start bayesian optimiser
     start_time = time.time()
     
-    opt.maximize(init_points=5,n_iter=50)
+    opt.maximize(init_points=3,n_iter=25)
     
     delta = time.time() - start_time
 
@@ -748,13 +767,5 @@ if __name__ == "__main__":
         "Output best metric = %s"%(opt.max)
     )
 
-    #Free-ing GPU resources
-    print(
-        "Releasing GPU resources.......\n\n"
-    )
-
     free_GPU()
     
-    print(
-        "Done releasing GPU.........\n\n"
-    )

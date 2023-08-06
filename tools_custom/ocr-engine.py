@@ -773,5 +773,6 @@ if __name__ == "__main__":
         )
 
         free_GPU()
-    except:
+    except Exception as error:
+        print("An exception occurred:", error) 
         free_GPU()

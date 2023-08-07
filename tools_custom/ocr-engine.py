@@ -531,27 +531,20 @@ def create_log_optimisation(model_dir, model):
         )
 
 def allocate_gpu_memory():
-    print(f"Allocate Memory: {cp.cuda.memory_allocated()}")
+    print("Allocating Memory do Nothing...")
   
 
 def deallocate_gpu_memory():
-    # Membersihkan cache memori
-    cp.cuda.Device().free_memory()
-
     # Setelah membersihkan cache
-    print(f"Deallocate Memory: {cp.cuda.memory_allocated()}")
+    print(f"Deallocate Memory do Nothing...")
 
 def free_GPU():
     #Free-ing GPU resources
-    print(
-        "Releasing GPU resources.......\n\n"
-    )
+    print("Releasing GPU resources.......\n\n")
     #Method to kill all processes running on GPU and free GPU resources
     cuda.select_device(0)
     cuda.close()
-    print(
-        "Done releasing GPU.........\n\n"
-    )
+    print("Done releasing GPU.........")
 
 def predict(
         absolute_path_path_to_predict_folder, 
@@ -723,7 +716,7 @@ if __name__ == "__main__":
 
             optimised: beat1, beta2, learning_rate, regularizer_factor
         '''
-        hyperparams["epoch_num"] = 1
+        hyperparams["epoch_num"] = 200
         hyperparams["algorithm"] = "LayoutXLM"
         hyperparams["optimizer_name"] = "AdamW"
 
@@ -756,21 +749,21 @@ if __name__ == "__main__":
             f=objfunc,
             pbounds=parameterbounds,
             verbose=2,
-            random_state=42
+            random_state=42 #should be 42
         )
 
         #Start bayesian optimiser
         start_time = time.time()
         
-        opt.maximize(init_points=3,n_iter=25)
+        #should be [opt.maximize(init_points=5,n_iter=25)]
+        #We limit to 3 iteration,1+2
+        opt.maximize(init_points=1,n_iter=2)
         
         delta = time.time() - start_time
 
         print("Total time for bayesian optimisation: %s s"%delta)
 
-        print(
-            "Output best metric = %s"%(opt.max)
-        )
+        print("Output best metric = %s"%(opt.max))
 
         free_GPU()
     except Exception as error:

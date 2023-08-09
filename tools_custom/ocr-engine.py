@@ -691,7 +691,7 @@ if __name__ == "__main__":
     if args.predict:
         predict(absolute_path_script_folder=script_path,
                 model_dir= model_dir_path,
-                sdk_path_dir=sdk_path,
+                sdk_path_dir=f"{sdk_path}PaddleOCR/",
                 predict_file=args.predict_file,
                 use_gpu=not useCPU,)
 

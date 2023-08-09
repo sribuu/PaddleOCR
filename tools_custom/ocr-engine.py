@@ -65,11 +65,13 @@ import functools
 from bayes_opt import BayesianOptimization as BO
 
 from numba import cuda
-import cupy as cp
+# import cupy as cp
 
 #Import s3 bucket
 import boto3
 from dotenv import load_dotenv
+
+import argparse
 
 class SribuuOCRTrainer(object):
     '''
@@ -547,9 +549,10 @@ def free_GPU():
     print("Done releasing GPU.........")
 
 def predict(
-        absolute_path_path_to_predict_folder, 
+        absolute_path_script_folder, 
         model_dir,
-        predict_file
+        predict_file,
+        use_gpu=True
     ):
     '''
     Still using subprocess because dissecting the PPOCR-native predict script risks changing the package :(
@@ -557,8 +560,8 @@ def predict(
         model_dir: path to the directory where the trained models are hosted
     '''
     #Text formatting
-    predict_script = "%s/predict_kie_token_ser_re.py"%(absolute_path_path_to_predict_folder)
-    predict_ser_script = "%s/predict_kie_token_ser.py"%(absolute_path_path_to_predict_folder)
+    predict_script = "%s/predict_kie_token_ser_re.py"%absolute_path_script_folder
+    predict_ser_script = "%s/predict_kie_token_ser.py"%absolute_path_script_folder
     model_compiled_re = "%s/model_compiled/re"%(model_dir)
     model_compiled_ser = "%s/model_compiled/ser"%(model_dir)
 
@@ -574,7 +577,8 @@ def predict(
             f"--image_dir={predict_file}",
             "--ser_dict_path=%s/label-key-list.txt"%(model_dir),
             "--vis_font_path=visual_font",
-            "--ocr_order_method=tb-yx"
+            "--ocr_order_method=tb-yx",
+            f"--use_gpu={use_gpu}"
         ])
     #If not: SER prediction only
     else:
@@ -587,7 +591,8 @@ def predict(
             f"--image_dir={predict_file}",
             "--ser_dict_path=%s/label-key-list.txt"%(model_dir),
             "--vis_font_path=visual_font",
-            "--ocr_order_method=tb-yx"
+            "--ocr_order_method=tb-yx",
+            f"--use_gpu={use_gpu}"
         ])
 
 def predict_checkpoint():
@@ -660,112 +665,137 @@ def fetch_dataset(model_dir,model_id):
         f.write(text+"\n")
 
 if __name__ == "__main__":
-    try:
-        #Free GPU before start. Probaby will be removed later
-        #FIXME: Add hyperparams for RE
-        # INVOICE : 7a81e532-af43-4e8c-af67-dcdedb778e96
-        # RECEIPT : a0c1e53d-5bec-4e0d-aaee-71b28936181a
-        # ESTATEMENT : 509b4e5d-d470-4eec-bbdf-59daf50af631
-        # PURCHASE_ORDER : 20bb2d54-661f-440d-9dc8-80b1ed743435
+    sdk_path = "/home/ubuntu/"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--predict", action='store_const', const=True, default=False,help="Use this to do prediction")
+    parser.add_argument("--train", action='store_const', const=True, default=False,help="Use this to do training")
+    parser.add_argument("--mode",choices=["ALL","SER","RE"],default="SER", help="ALL=SER+RE ,SER, RE")
+    parser.add_argument("--predict_file", type=str, help="Absolute path for Predict File")
+    parser.add_argument("--model_id", type=str,required=True,  help="Model id for training or prediction\n\n"+
+                        """
+                            # INVOICE : 7a81e532-af43-4e8c-af67-dcdedb778e96
+                            # RECEIPT : a0c1e53d-5bec-4e0d-aaee-71b28936181a
+                            # ESTATEMENT : 509b4e5d-d470-4eec-bbdf-59daf50af631
+                            # PURCHASE_ORDER : 20bb2d54-661f-440d-9dc8-80b1ed743435
+                        """)
+    parser.add_argument("--use_cpu", type=bool, default=False, help="Enable to use cpu instead gpu")
 
-        model_id = "a0c1e53d-5bec-4e0d-aaee-71b28936181a"
-        model_dir_only = "/home/models/"
-        model_dir = f"{model_dir_only}{model_id}"
-        useCPU = False
+    args = parser.parse_args()
 
-        train_fraction = 0.7
-        validation_fraction = 0.2
-        test_fraction = 0.1
+    script_path = f"{sdk_path}PaddleOCR/ppstructure/kie"
+    model_dir_path = f"{sdk_path}models/{args.model_id}"
+    useCPU = args.use_cpu
 
-        #What model do you train?ALL
-        model = "SER"
+    if args.predict:
+        predict(absolute_path_script_folder=script_path,model_dir= model_dir_path,predict_file=args.predict_file,
+                use_gpu=not useCPU)
 
-        #Disable this temporary to avoid replace existing dataset
-        # fetch_dataset(model_dir=model_dir_only,model_id=model_id)
+    else: #train
+        try:
+            #Free GPU before start. Probaby will be removed later
+            #FIXME: Add hyperparams for RE
+            # INVOICE : 7a81e532-af43-4e8c-af67-dcdedb778e96
+            # RECEIPT : a0c1e53d-5bec-4e0d-aaee-71b28936181a
+            # ESTATEMENT : 509b4e5d-d470-4eec-bbdf-59daf50af631
+            # PURCHASE_ORDER : 20bb2d54-661f-440d-9dc8-80b1ed743435
 
-        trainer = SribuuOCRTrainer(
-            model_dir = model_dir,
-            trainResume = None,
-            useCPU = useCPU
-        )
+            model_id = args.predict_file #"509b4e5d-d470-4eec-bbdf-59daf50af631"
+            model_dir_only = model_dir_path #"/Users/ariefwijaya/Documents/ARIEFW/Project/PaddleFile/models/"
+            model_dir = f"{model_dir_only}{model_id}"
 
-        if model == "ALL":
-            create_log_optimisation(
+            train_fraction = 0.7
+            validation_fraction = 0.2
+            test_fraction = 0.1
+
+            #What model do you train?ALL
+            model = args.mode
+
+            #Disable this temporary to avoid replace existing dataset
+            # fetch_dataset(model_dir=model_dir_only,model_id=model_id)
+
+            trainer = SribuuOCRTrainer(
                 model_dir = model_dir,
-                model = "SER"
+                trainResume = None,
+                useCPU = useCPU
             )
 
-            create_log_optimisation(
-                model_dir = model_dir,
-                model = "RE"
+            if model == "ALL":
+                create_log_optimisation(
+                    model_dir = model_dir,
+                    model = "SER"
+                )
+
+                create_log_optimisation(
+                    model_dir = model_dir,
+                    model = "RE"
+                )
+            else:
+                create_log_optimisation(
+                    model_dir = model_dir,
+                    model = model
+                )
+
+
+
+            #Instantiate dictionary that contains hyperparameters
+            hyperparams = {}
+
+            '''
+            Differentiate static hyperparams e.g. epoch from the optimised params
+                static: epoch_num, algorithm, optimizer_name, loss_name, regularize_name
+
+                optimised: beat1, beta2, learning_rate, regularizer_factor
+            '''
+            hyperparams["epoch_num"] = 200
+            hyperparams["algorithm"] = "LayoutXLM"
+            hyperparams["optimizer_name"] = "AdamW"
+
+            if model != "RE":
+                hyperparams["loss_name"] = "VQASerTokenLayoutLMLoss"
+                hyperparams['architecture_name'] = "LayoutXLMForSer"
+            else:
+                hyperparams["loss_name"] = "LossFromOutput"
+                hyperparams['architecture_name'] = "LayoutXLMForRe"
+
+            hyperparams["regularizer_name"] = "L2"
+            hyperparams["lr_name"] = "Linear"
+
+            #Instantiate partial obj function, where hyperparams is left off for optimisation routine
+            objfunc = functools.partial(
+                trainer.fit, hyperparams = hyperparams, model=model, 
+                train_fraction=train_fraction, validation_fraction=validation_fraction, test_fraction=test_fraction
             )
-        else:
-            create_log_optimisation(
-                model_dir = model_dir,
-                model = model
+
+            #Instantiate the hyperparameters bound
+            parameterbounds = {
+                'beta1':(0.8,0.95),
+                'beta2':(0.9,0.95),
+                'learning_rate':(5e-7,5e-4),
+                'regularizer_factor':(0,0.499)
+            }
+
+            #Instantiate the optimisation object
+            opt = BO(
+                f=objfunc,
+                pbounds=parameterbounds,
+                verbose=2,
+                random_state=42 #should be 42
             )
 
+            #Start bayesian optimiser
+            start_time = time.time()
+            
+            #should be [opt.maximize(init_points=5,n_iter=25)]
+            #We limit to 3 iteration,1+2
+            opt.maximize(init_points=1,n_iter=2)
+            
+            delta = time.time() - start_time
 
+            print("Total time for bayesian optimisation: %s s"%delta)
 
-        #Instantiate dictionary that contains hyperparameters
-        hyperparams = {}
+            print("Output best metric = %s"%(opt.max))
 
-        '''
-        Differentiate static hyperparams e.g. epoch from the optimised params
-            static: epoch_num, algorithm, optimizer_name, loss_name, regularize_name
-
-            optimised: beat1, beta2, learning_rate, regularizer_factor
-        '''
-        hyperparams["epoch_num"] = 200
-        hyperparams["algorithm"] = "LayoutXLM"
-        hyperparams["optimizer_name"] = "AdamW"
-
-        if model != "RE":
-            hyperparams["loss_name"] = "VQASerTokenLayoutLMLoss"
-            hyperparams['architecture_name'] = "LayoutXLMForSer"
-        else:
-            hyperparams["loss_name"] = "LossFromOutput"
-            hyperparams['architecture_name'] = "LayoutXLMForRe"
-
-        hyperparams["regularizer_name"] = "L2"
-        hyperparams["lr_name"] = "Linear"
-
-        #Instantiate partial obj function, where hyperparams is left off for optimisation routine
-        objfunc = functools.partial(
-            trainer.fit, hyperparams = hyperparams, model=model, 
-            train_fraction=train_fraction, validation_fraction=validation_fraction, test_fraction=test_fraction
-        )
-
-        #Instantiate the hyperparameters bound
-        parameterbounds = {
-            'beta1':(0.8,0.95),
-            'beta2':(0.9,0.95),
-            'learning_rate':(5e-7,5e-4),
-            'regularizer_factor':(0,0.499)
-        }
-
-        #Instantiate the optimisation object
-        opt = BO(
-            f=objfunc,
-            pbounds=parameterbounds,
-            verbose=2,
-            random_state=42 #should be 42
-        )
-
-        #Start bayesian optimiser
-        start_time = time.time()
-        
-        #should be [opt.maximize(init_points=5,n_iter=25)]
-        #We limit to 3 iteration,1+2
-        opt.maximize(init_points=1,n_iter=2)
-        
-        delta = time.time() - start_time
-
-        print("Total time for bayesian optimisation: %s s"%delta)
-
-        print("Output best metric = %s"%(opt.max))
-
-        free_GPU()
-    except Exception as error:
-        print("An exception occurred:", error) 
-        free_GPU()
+            free_GPU()
+        except Exception as error:
+            print("An exception occurred:", error) 
+            free_GPU()

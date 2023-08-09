@@ -551,6 +551,7 @@ def free_GPU():
 def predict(
         absolute_path_script_folder, 
         model_dir,
+        sdk_path_dir,
         predict_file,
         use_gpu=True
     ):
@@ -564,6 +565,7 @@ def predict(
     predict_ser_script = "%s/predict_kie_token_ser.py"%absolute_path_script_folder
     model_compiled_re = "%s/model_compiled/re"%(model_dir)
     model_compiled_ser = "%s/model_compiled/ser"%(model_dir)
+    visual_font = f"{sdk_path_dir}tools_custom/fonts/simfang.ttf"
 
     #If both SER and RE model are found -- predict using both
     if os.path.isdir(model_compiled_re) and os.path.isdir(model_compiled_ser):
@@ -576,7 +578,7 @@ def predict(
             "--use_visual_backbone=False",
             f"--image_dir={predict_file}",
             "--ser_dict_path=%s/label-key-list.txt"%(model_dir),
-            "--vis_font_path=visual_font",
+            f"--vis_font_path={visual_font}",
             "--ocr_order_method=tb-yx",
             f"--use_gpu={use_gpu}"
         ])
@@ -586,11 +588,11 @@ def predict(
             "python3",
             predict_ser_script,
             "--kie_algorithm=LayoutXLM",
-            f"--ser_model_dir={model_compiled_re}",
+            f"--ser_model_dir={model_compiled_ser}",
             "--use_visual_backbone=False",
             f"--image_dir={predict_file}",
             "--ser_dict_path=%s/label-key-list.txt"%(model_dir),
-            "--vis_font_path=visual_font",
+            f"--vis_font_path={visual_font}",
             "--ocr_order_method=tb-yx",
             f"--use_gpu={use_gpu}"
         ])
@@ -687,8 +689,11 @@ if __name__ == "__main__":
     useCPU = args.use_cpu
 
     if args.predict:
-        predict(absolute_path_script_folder=script_path,model_dir= model_dir_path,predict_file=args.predict_file,
-                use_gpu=not useCPU)
+        predict(absolute_path_script_folder=script_path,
+                model_dir= model_dir_path,
+                sdk_path_dir=sdk_path,
+                predict_file=args.predict_file,
+                use_gpu=not useCPU,)
 
     else: #train
         try:

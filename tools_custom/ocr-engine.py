@@ -671,7 +671,7 @@ def fetch_dataset(model_dir,model_id):
         f.write(text+"\n")
 
 if __name__ == "__main__":
-    sdk_path = "/Users/ariefwijaya/Documents/ARIEFW/Project/"#"/home/ubuntu/"
+    sdk_path = "/home/ubuntu/"
     parser = argparse.ArgumentParser()
     parser.add_argument("--predict", action='store_const', const=True, default=False,help="Use this to do prediction")
     parser.add_argument("--train", action='store_const', const=True, default=False,help="Use this to do training")

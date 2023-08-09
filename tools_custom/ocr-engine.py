@@ -567,6 +567,8 @@ def predict(
     model_compiled_ser = "%s/model_compiled/ser"%(model_dir)
     visual_font = f"{sdk_path_dir}tools_custom/fonts/simfang.ttf"
 
+    output_predict_dir = os.path.join("output",os.path.basename(predict_file))
+
     #If both SER and RE model are found -- predict using both
     if os.path.isdir(model_compiled_re) and os.path.isdir(model_compiled_ser):
         subprocess.run([
@@ -577,6 +579,7 @@ def predict(
             f"--ser_model_dir={model_compiled_ser}",
             "--use_visual_backbone=False",
             f"--image_dir={predict_file}",
+            f"--output={output_predict_dir}",
             "--ser_dict_path=%s/label-key-list.txt"%(model_dir),
             f"--vis_font_path={visual_font}",
             "--ocr_order_method=tb-yx",
@@ -591,6 +594,7 @@ def predict(
             f"--ser_model_dir={model_compiled_ser}",
             "--use_visual_backbone=False",
             f"--image_dir={predict_file}",
+            f"--output={output_predict_dir}",
             "--ser_dict_path=%s/label-key-list.txt"%(model_dir),
             f"--vis_font_path={visual_font}",
             "--ocr_order_method=tb-yx",
@@ -667,7 +671,7 @@ def fetch_dataset(model_dir,model_id):
         f.write(text+"\n")
 
 if __name__ == "__main__":
-    sdk_path = "/home/ubuntu/"
+    sdk_path = "/Users/ariefwijaya/Documents/ARIEFW/Project/"#"/home/ubuntu/"
     parser = argparse.ArgumentParser()
     parser.add_argument("--predict", action='store_const', const=True, default=False,help="Use this to do prediction")
     parser.add_argument("--train", action='store_const', const=True, default=False,help="Use this to do training")

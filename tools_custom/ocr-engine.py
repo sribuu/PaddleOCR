@@ -553,6 +553,7 @@ def predict(
         model_dir,
         sdk_path_dir,
         predict_file,
+        predict_file_output,
         use_gpu=True
     ):
     '''
@@ -566,8 +567,8 @@ def predict(
     model_compiled_re = "%s/model_compiled/re"%(model_dir)
     model_compiled_ser = "%s/model_compiled/ser"%(model_dir)
     visual_font = f"{sdk_path_dir}tools_custom/fonts/simfang.ttf"
-
-    output_predict_dir = os.path.join("output",os.path.basename(predict_file))
+    
+    output_predict_dir = os.path.join(model_dir,"output",os.path.basename(predict_file if (predict_file_output is None) else predict_file_output))
 
     #If both SER and RE model are found -- predict using both
     if os.path.isdir(model_compiled_re) and os.path.isdir(model_compiled_ser):
@@ -677,6 +678,7 @@ if __name__ == "__main__":
     parser.add_argument("--train", action='store_const', const=True, default=False,help="Use this to do training")
     parser.add_argument("--mode",choices=["ALL","SER","RE"],default="SER", help="ALL=SER+RE ,SER, RE")
     parser.add_argument("--predict_file", type=str, help="Absolute path for Predict File")
+    parser.add_argument("--predict_file_output", type=str, help="Absolute path for Output Predict File")
     parser.add_argument("--model_id", type=str,required=True,  help="Model id for training or prediction\n\n"+
                         """
                             # INVOICE : 7a81e532-af43-4e8c-af67-dcdedb778e96
@@ -689,6 +691,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     script_path = f"{sdk_path}PaddleOCR/ppstructure/kie"
+    #PaddleFile only for Local
     model_dir_path = f"{sdk_path}models/{args.model_id}"
     useCPU = args.use_cpu
 
@@ -697,6 +700,7 @@ if __name__ == "__main__":
                 model_dir= model_dir_path,
                 sdk_path_dir=f"{sdk_path}PaddleOCR/",
                 predict_file=args.predict_file,
+                predict_file_output=args.predict_file_output,
                 use_gpu=not useCPU,)
 
     else: #train

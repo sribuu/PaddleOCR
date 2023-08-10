@@ -61,12 +61,13 @@ class DocClassifier:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--file_name", type=str)
+    parser.add_argument("--model_path", type=str)
 
     args, left_argv = parser.parse_known_args()
     image = Image.open(args.file_name)
-    path_parent = '/home/ubuntu/models/document_class/' #'/home/models/document_class/'
-    path_to_model = f'{path_parent}latest-model-073123'
-    path_to_processor = f'{path_parent}latest-processor-073123'
+    path_parent = args.model_path
+    path_to_model = os.path.join(path_parent,"latest-model-073123")
+    path_to_processor = os.path.join(path_parent,"latest-processor-073123")
 
     # initializing the model class
     doc_classifier = DocClassifier(path_to_model, path_to_processor)

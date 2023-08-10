@@ -1,10 +1,6 @@
 import re
-from datasets import load_dataset
-import torch
 from transformers import DonutProcessor, VisionEncoderDecoderModel
-import json
-from tqdm.auto import tqdm
-import numpy as np
+from numba import cuda
 import argparse
 import os
 from PIL import Image
@@ -14,7 +10,7 @@ class DocClassifier:
     def __init__(self, path_to_model, path_to_processor):
         self.processor = DonutProcessor.from_pretrained(path_to_processor)
         self.model = VisionEncoderDecoderModel.from_pretrained(path_to_model)
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = "cuda" if cuda.is_available() else "cpu"
 
     '''
     input: a PIL image/pixel values

@@ -685,6 +685,8 @@ if __name__ == "__main__":
                             # RECEIPT : a0c1e53d-5bec-4e0d-aaee-71b28936181a
                             # ESTATEMENT : 509b4e5d-d470-4eec-bbdf-59daf50af631
                             # PURCHASE_ORDER : 20bb2d54-661f-440d-9dc8-80b1ed743435
+                            # DELIVERY_NOTES : e9603dc4-f03a-40de-849b-4ce18273fbfe
+                            # BKPB : f9e974af-81aa-4e2a-a6d4-8f1583cc7f9a
                         """)
     parser.add_argument("--use_cpu", type=bool, default=False, help="Enable to use cpu instead gpu")
 
@@ -692,7 +694,7 @@ if __name__ == "__main__":
 
     script_path = f"{sdk_path}PaddleOCR/ppstructure/kie"
     #PaddleFile only for Local
-    model_dir_path = f"{sdk_path}models/{args.model_id}"
+    model_dir_path = f"{sdk_path}models/"
     useCPU = args.use_cpu
 
     if args.predict:
@@ -712,7 +714,7 @@ if __name__ == "__main__":
             # ESTATEMENT : 509b4e5d-d470-4eec-bbdf-59daf50af631
             # PURCHASE_ORDER : 20bb2d54-661f-440d-9dc8-80b1ed743435
 
-            model_id = args.predict_file #"509b4e5d-d470-4eec-bbdf-59daf50af631"
+            model_id = args.model_id #"509b4e5d-d470-4eec-bbdf-59daf50af631"
             model_dir_only = model_dir_path #"/Users/ariefwijaya/Documents/ARIEFW/Project/PaddleFile/models/"
             model_dir = f"{model_dir_only}{model_id}"
 
@@ -807,8 +809,10 @@ if __name__ == "__main__":
             print("Total time for bayesian optimisation: %s s"%delta)
 
             print("Output best metric = %s"%(opt.max))
-
-            free_GPU()
+            
+            if not useCPU:
+                free_GPU()
         except Exception as error:
             print("An exception occurred:", error) 
-            free_GPU()
+            if not useCPU:
+                free_GPU()

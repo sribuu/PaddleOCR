@@ -156,7 +156,7 @@ class TextRecognizer(object):
             if self.rec_algorithm == 'ViTSTR':
                 img = image_pil.resize([imgW, imgH], Image.BICUBIC)
             else:
-                img = image_pil.resize([imgW, imgH], Image.ANTIALIAS)
+                img = image_pil.resize([imgW, imgH], Image.LANCZOS)
             img = np.array(img)
             norm_img = np.expand_dims(img, -1)
             norm_img = norm_img.transpose((2, 0, 1))
@@ -624,6 +624,7 @@ class TextRecognizer(object):
                         preds = outputs
                     else:
                         preds = outputs[0]
+                    self.predictor.try_shrink_memory()
             rec_result = self.postprocess_op(preds)
             for rno in range(len(rec_result)):
                 rec_res[indices[beg_img_no + rno]] = rec_result[rno]

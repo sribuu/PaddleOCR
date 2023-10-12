@@ -28,8 +28,10 @@ from ppocr.utils.logging import get_logger
 
 
 def str2bool(v):
-    return v.lower() in ("true", "t", "1")
+    return v.lower() in ("true", "yes", "t", "y", "1")
 
+def str2int_tuple(v):
+    return tuple([int(i.strip()) for i in v.split(",")])
 
 def init_args():
     parser = argparse.ArgumentParser()
@@ -471,7 +473,7 @@ def draw_box_txt_fine(img_size, box, txt, font_path="./doc/fonts/simfang.ttf"):
 def create_font(txt, sz, font_path="./doc/fonts/simfang.ttf"):
     font_size = int(sz[1] * 0.99)
     font = ImageFont.truetype(font_path, font_size, encoding="utf-8")
-    length = font.getsize(txt)[0]
+    length = font.getlength(txt)
     if length > sz[0]:
         font_size = int(font_size * sz[0] / length)
         font = ImageFont.truetype(font_path, font_size, encoding="utf-8")

@@ -692,7 +692,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    script_path = f"{sdk_path}ocr-engine/paddle-ocr/ppstructure/kie"
+    script_path = f"{sdk_path}ocr-engine/paddle-ocr/PaddleOCR/ppstructure/kie"
     #PaddleFile only for Local
     model_dir_path = f"{sdk_path}models/"
     useCPU = args.use_cpu

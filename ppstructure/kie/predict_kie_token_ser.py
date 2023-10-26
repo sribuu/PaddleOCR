@@ -122,7 +122,6 @@ class SerPredictor(object):
             output = output_tensor.copy_to_cpu()
             outputs.append(output)
         preds = outputs[0]
-
         post_result = self.postprocess_op(
             preds, segment_offset_ids=data[6], ocr_infos=data[7])
         elapse = time.time() - starttime
@@ -159,16 +158,15 @@ def main(args):
                     }, ensure_ascii=False))
             f_w.write(res_str)
 
-            # TODO: Disable temporary by @AriefWijaya for speedup
-            # img_res = draw_ser_results(
-            #     image_file,
-            #     ser_res,
-            #     font_path=args.vis_font_path, )
+            img_res = draw_ser_results(
+                image_file,
+                ser_res,
+                font_path=args.vis_font_path, )
 
-            # img_save_path = os.path.join(args.output,
-            #                              os.path.basename(image_file))
-            # cv2.imwrite(img_save_path, img_res)
-            # logger.info("save vis result to {}".format(img_save_path))
+            img_save_path = os.path.join(args.output,
+                                         os.path.basename(image_file))
+            cv2.imwrite(img_save_path, img_res)
+            logger.info("save vis result to {}".format(img_save_path))
             if count > 0:
                 total_time += elapse
             count += 1

@@ -10,17 +10,6 @@ FIXME:
 '''
 import sys
 import os
-
-#Get the directory of this file which should be located in tools_custom
-__dir__ = os.path.dirname(os.path.abspath(__file__))
-
-#Get the abs directory of the OCR repo
-__parent__ = os.path.dirname(__dir__)
-
-#Append it to sys s.t. Python can find the modules
-sys.path.insert(0,__parent__)
-sys.path.insert(0,__dir__)
-
 #Start importing modules
 import argparse
 import subprocess
@@ -39,23 +28,10 @@ import pandas as pd
 from gen_ocr_train_val_test import *
 
 #Importing paddle
-import yaml
-import paddle
+
 import paddle.distributed as dist
 
-from ppocr.data import build_dataloader
-from ppocr.losses import build_loss
-from ppocr.optimizer import build_optimizer
-from ppocr.postprocess import build_post_process
-from ppocr.metrics import build_metric
-from ppocr.utils.save_load import load_model
-from ppocr.utils.utility import set_seed
-from ppocr.modeling.architectures import apply_to_static
-from ppocr.modeling.architectures import build_model
-
 import time
-
-dist.get_world_size()
 
 #Import hyperparameters class
 from hyperparameters import HyperParameters    
@@ -72,6 +48,19 @@ import boto3
 from dotenv import load_dotenv
 
 import argparse
+
+dist.get_world_size()
+#Get the directory of this file which should be located in tools_custom
+__dir__ = os.path.dirname(os.path.abspath(__file__))
+
+#Get the abs directory of the OCR repo
+__parent__ = os.path.dirname(__dir__)
+
+#Append it to sys s.t. Python can find the modules
+sys.path.insert(0,__parent__)
+sys.path.insert(0,__dir__)
+
+
 
 class SribuuOCRTrainer(object):
     '''
@@ -538,7 +527,7 @@ def allocate_gpu_memory():
 
 def deallocate_gpu_memory():
     # Setelah membersihkan cache
-    print(f"Deallocate Memory do Nothing...")
+    print("Deallocate Memory do Nothing...")
 
 def free_GPU():
     #Free-ing GPU resources
@@ -672,13 +661,13 @@ def fetch_dataset(model_dir,model_id):
         f.write(text+"\n")
 
 if __name__ == "__main__":
-    sdk_path = "/home/ubuntu/"
     parser = argparse.ArgumentParser()
     parser.add_argument("--predict", action='store_const', const=True, default=False,help="Use this to do prediction")
     parser.add_argument("--train", action='store_const', const=True, default=False,help="Use this to do training")
     parser.add_argument("--mode",choices=["ALL","SER","RE"],default="SER", help="ALL=SER+RE ,SER, RE")
     parser.add_argument("--predict_file", type=str, help="Absolute path for Predict File")
     parser.add_argument("--predict_file_output", type=str, help="Absolute path for Output Predict File")
+    parser.add_argument("--sdk_path", type=str, default="/home/ubuntu", help="SDK Path")
     parser.add_argument("--model_id", type=str,required=True,  help="Model id for training or prediction\n\n"+
                         """
                             # INVOICE : 7a81e532-af43-4e8c-af67-dcdedb778e96
@@ -691,6 +680,8 @@ if __name__ == "__main__":
     parser.add_argument("--use_cpu", type=bool, default=False, help="Enable to use cpu instead gpu")
 
     args = parser.parse_args()
+
+    sdk_path = args.sdk_path
 
     script_path = f"{sdk_path}ocr-engine/paddle-ocr/PaddleOCR/ppstructure/kie"
     #PaddleFile only for Local

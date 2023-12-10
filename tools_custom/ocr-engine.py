@@ -118,7 +118,7 @@ class SribuuOCRTrainer(object):
   
         # creating dictionary
         with open(self.label_file) as f:
-            for line in f:
+            for line in tqdm(f):
                 #Read each line and turn into key value pair dict    
                 splitted = line.split("\t", 1)
 
@@ -217,7 +217,7 @@ class SribuuOCRTrainer(object):
     
     def split_data(self, train_fraction, validation_fraction, test_fraction):
         self.datasetRootPath = ""
-        self.detLabelFileName = "%s/Label-linked.txt"%(self.model_dir)
+        self.detLabelFileName = "%s/Label.txt"%(self.model_dir)
         self.recLabelFileName = self.rec_gt_fn
         self.recImageDirName = self.crop_img_dir
         self.detRootPath = "%s/train_data/det"%(self.model_dir)
@@ -315,7 +315,7 @@ class SribuuOCRTrainer(object):
             self.reformat_label_list()
 
             #Linking files
-            self.link_file()
+            # self.link_file()
 
             #Generating rec cropped image
             print("== Generate Rec Cropped Img")

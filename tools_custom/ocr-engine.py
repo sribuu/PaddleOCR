@@ -14,6 +14,7 @@ import os
 import argparse
 import subprocess
 import re
+from tqdm import tqdm
 import json
 
 from paddleocr import PaddleOCR, PPStructure
@@ -191,7 +192,7 @@ class SribuuOCRTrainer(object):
         #Start populating the self.rec_gt.txt
         with open(self.rec_gt_fn, 'w', encoding='utf-8') as f:
             with open(self.label_file) as fh:
-                for line in fh:
+                for line in tqdm(fh):
                     key, annotation = line.split("\t", 1)
 
                     #Read the image contained in img_path

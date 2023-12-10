@@ -108,75 +108,6 @@ class SribuuOCRTrainer(object):
         with open("%s/label-key-list.txt"%(self.model_dir), "w") as file:
             file.write("\n".join(result))
 
-    def link_file(self):
-        #Join the self.model_dir with *.txt
-        self.label_file = "%s/Label.txt"%(self.model_dir)
-
-        #Instantiate dictionary and lists
-        self.linking_dict = {}
-        self.linking_dictRE = {}
-  
-        # creating dictionary
-        with open(self.label_file) as f:
-            for line in tqdm(f):
-                #Read each line and turn into key value pair dict    
-                splitted = line.split("\t", 1)
-
-                #Handling wrong format from BE
-                if(len(splitted)<2):
-                    splitted = line.split("g [",1)
-                    command = f"{splitted[0]}g"
-                    description = f"[{splitted[1]}"
-                else:
-                    command = splitted[0]
-                    description = splitted[1]
-                
-                self.linking_dict[command] = description.strip()
-                self.linking_dictRE[command] = description.strip()
-
-                for key, values in self.linking_dict.items():
-                    temp = json.loads(values)  # temporary store array values from dict
-                    while_count = 1  # counting from 1, allowing us to remove element if needed
-                    _index = while_count - 1  # real index from array
-                    minimum_linking = 1
-                    has_linking = 0
-
-                    while while_count <= len(temp):
-                        temp_data = temp[_index]
-                        while_count += 1
-
-                        if  "linking" in temp_data and len(temp_data["linking"]) > 0:
-                            has_linking += 1
-
-                        if "key_cls" in temp_data:  # rename key_cls to label if needed
-                            temp_data["label"] = temp_data.pop("key_cls")
-
-                        if temp_data["label"] == "None":
-                            temp_data["label"] = "ignore"
-
-                        temp[_index] = temp_data  # modify current data in temp
-                        _index += 1
-    
-                    self.linking_dict[key] = json.dumps(temp)  # putting back into _dict
-
-                    if has_linking >= minimum_linking:
-                        self.linking_dictRE[key] = json.dumps(temp)  # putting back into _dict
-                    else:
-                        if key in self.linking_dictRE:
-                            del  self.linking_dictRE[key]  # delete files that doesn't have enough key_linking
-
-
-        # convert dictionary into text separated by new line
-        text = "\n".join([f"{key}\t{value}" for key, value in self.linking_dict.items()])
-        textRE = "\n".join([f"{key}\t{value}" for key, value in self.linking_dictRE.items()])
-
-        # write the text to a file
-        with open("%s/Label-linked.txt"%(self.model_dir), "w") as f:
-            f.write(text+"\n")
-
-        with open("%s/Label-linked-RE.txt"%(self.model_dir),"w") as f:
-            f.write(textRE + "\n")
-
     def gen_cropped_img(self):
         ques_img = []
         #Create crop_img folder
@@ -307,15 +238,14 @@ class SribuuOCRTrainer(object):
         print("== TRAINING ==")
 
         if not self.is_prepared:
-            print("== Generating id and linking the dataset label based on the linking file")
+            # print("== Generating id and linking the dataset label based on the linking file")
 
             #Unpack utilities
             self.unpack_utilities_file()
 
             self.reformat_label_list()
 
-            #Linking files
-            # self.link_file()
+            self.label_file = "%s/Label.txt"%(self.model_dir)
 
             #Generating rec cropped image
             print("== Generate Rec Cropped Img")
@@ -802,9 +732,9 @@ if __name__ == "__main__":
 
             print("Output best metric = %s"%(opt.max))
             
-            if not useCPU:
-                free_GPU()
+            # if not useCPU:
+            #     free_GPU()
         except Exception as error:
             print("An exception occurred:", error) 
-            if not useCPU:
-                free_GPU()
+            # if not useCPU:
+            #     free_GPU()

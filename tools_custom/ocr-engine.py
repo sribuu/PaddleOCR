@@ -83,7 +83,7 @@ class SribuuOCRTrainer(object):
         self.model_dir = model_dir
 
         #avoid regenerate existing data
-        self.is_prepared = False
+        self.is_prepared = isPrepared
 
         self.label_file = os.path.join(self.model_dir,"Label.txt")
 

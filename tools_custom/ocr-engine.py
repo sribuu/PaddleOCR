@@ -249,16 +249,16 @@ class SribuuOCRTrainer(object):
             #Splitting data set
             print("== Splitting dataset")
             self.split_data(train_fraction, validation_fraction, test_fraction)
-
-            #Count number of classes
-            with open("%s/label-key-list.txt"%(self.model_dir), 'r') as f:
-                num_count = len([line for line in f if line.strip()])
-
-            #Updating the number classes
-            self.num_classes = (2 * num_count) - 1
-            print("== Update num_classes to %s"%(self.num_classes))
-    
             self.is_prepared = True
+
+        #Count number of classes
+        with open("%s/label-key-list.txt"%(self.model_dir), 'r') as f:
+            num_count = len([line for line in f if line.strip()])
+
+        #Updating the number classes
+        self.num_classes = (2 * num_count) - 1
+        print("== Update num_classes to %s"%(self.num_classes))
+    
         #Instantiate hyperparameters dict
         hyperparams["num_classes"] = self.num_classes
         

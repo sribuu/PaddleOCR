@@ -609,7 +609,7 @@ if __name__ == "__main__":
                         """)
     parser.add_argument("--use_cpu", type=bool, default=False, help="Enable to use cpu instead gpu")
     parser.add_argument("--skip_preparation", action='store_const', const=True, default=False,help="Use existing data instead of generate new set")
-    parser.add_argument("--annotation_file", type=str, default="Label.txt",help="Annotation File E.g Label.txt")
+    parser.add_argument("--annotation_file", type=str,help="Annotation File E.g Label.txt")
 
     args = parser.parse_args()
 
@@ -651,11 +651,14 @@ if __name__ == "__main__":
                 useCPU = useCPU,
                 isPrepared=args.skip_preparation
             )
+
+            if args.annotation_file:
+                trainer.label_file = os.path.join(trainer.model_dir,args.annotation_file)
+# 
             
             # only to split dataset
             # ============
             # trainer.reformat_label_list()
-            # trainer.label_file = os.path.join(trainer.model_dir,args.annotation_file)
             # #Splitting data set
             # print("== Splitting dataset")
             # trainer.split_data(train_fraction, validation_fraction, test_fraction)

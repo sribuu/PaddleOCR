@@ -17,16 +17,15 @@ import re
 from tqdm import tqdm
 import json
 
-from paddleocr import PaddleOCR, PPStructure
 import cv2
 import numpy as np
 from tools import program, train, export_model
 from tools.infer.utility import get_rotate_crop_image
-import argparse
 
 import pandas as pd
+from ppocr.utils.utility import set_seed
 
-from gen_ocr_train_val_test import *
+from gen_ocr_train_val_test import genDetRecTrainVal
 
 #Importing paddle
 
@@ -44,11 +43,6 @@ from bayes_opt import BayesianOptimization as BO
 from numba import cuda
 # import cupy as cp
 
-#Import s3 bucket
-import boto3
-from dotenv import load_dotenv
-
-import argparse
 
 dist.get_world_size()
 #Get the directory of this file which should be located in tools_custom
@@ -69,7 +63,7 @@ class SribuuOCRTrainer(object):
         Params:
             model_dir, str, path to directory where the model we want to train is hosted (invoice, e-statements etc)
     '''
-    def __init__(self, model_dir:str, trainResume:str, predict=False, useCPU=True, predictInfer=False):
+    def __init__(self, model_dir:str, trainResume:str, predict=False, useCPU=True, predictInfer=False,isPrepared=False):
         #Config YML file
         #self.fn_config = fn_config
 
@@ -90,6 +84,19 @@ class SribuuOCRTrainer(object):
 
         #avoid regenerate existing data
         self.is_prepared = False
+
+        self.label_file = os.path.join(self.model_dir,"Label.txt")
+
+        #Create crop_img folder
+        if not self.is_prepared:
+            self.crop_img_dir = "%s/train_data/ocr_crop/"%(self.model_dir)
+            if not os.path.exists(self.crop_img_dir):
+                os.makedirs(
+                    self.crop_img_dir
+                )
+            #Construct the pathway of rec_gt.txt
+            self.rec_gt_fn = "%s/train_data/ocr_crop.txt"%(self.model_dir)
+
     
     def unpack_utilities_file(self):
         '''
@@ -110,16 +117,6 @@ class SribuuOCRTrainer(object):
 
     def gen_cropped_img(self):
         ques_img = []
-        #Create crop_img folder
-        self.crop_img_dir = "%s/crop_img/"%(self.model_dir)
-        if not os.path.exists(self.crop_img_dir):
-            os.mkdir(
-                self.crop_img_dir
-            )
-
-        #Construct the pathway of rec_gt.txt
-        self.rec_gt_fn = "%s/rec_gt.txt"%(self.model_dir)
-
         #Start populating the self.rec_gt.txt
         with open(self.rec_gt_fn, 'w', encoding='utf-8') as f:
             with open(self.label_file) as fh:
@@ -133,26 +130,26 @@ class SribuuOCRTrainer(object):
 
                         #Read the label
                         for i, label in enumerate(json.loads(annotation.strip())):
-                            if label['difficult']:
-                                continue
+                            # if label['difficult']:
+                            #     continue
                             img_crop = get_rotate_crop_image(img, np.array(label['points'], np.float32))
                             img_name = os.path.splitext(os.path.basename(img_path))[0] + '_crop_' + str(i) + '.jpg'
 
                             #Writing the cropped images to self.crop_img_dir
                             cv2.imwrite(self.crop_img_dir + img_name, img_crop)
-                            f.write('crop_img/' + img_name + '\t')
-                            f.write(label['transcription'] + '\n')
+                            f.write('train_data/ocr_crop/' + img_name + '\t'+label['transcription'].replace('\n','\\n').strip() + '\n')
                     except Exception as e:
                         ques_img.append(key)
                         print("Can not read image ", e)
     
     def split_data(self, train_fraction, validation_fraction, test_fraction):
-        self.datasetRootPath = ""
-        self.detLabelFileName = "%s/Label.txt"%(self.model_dir)
+        self.datasetRootPath = self.model_dir
+        self.detLabelFileName = self.label_file
         self.recLabelFileName = self.rec_gt_fn
         self.recImageDirName = self.crop_img_dir
-        self.detRootPath = "%s/train_data/det"%(self.model_dir)
-        self.recRootPath = "%s/train_data/rec"%(self.model_dir) 
+        self.detRootPath = "%s/train_data/kie"%(self.model_dir)
+        self.recRootPath = "%s/train_data/ocr"%(self.model_dir) 
+        self.overwriteLabelFile = False
 
         #All added has to be one innit?
         whole = test_fraction + train_fraction + validation_fraction
@@ -161,7 +158,7 @@ class SribuuOCRTrainer(object):
             assert(
                 whole <= 1
             )
-        except Exception as e:
+        except Exception:
             raise ValueError(
                 "Train fraction + validation fraction + test fraction > 1."
             )
@@ -244,8 +241,6 @@ class SribuuOCRTrainer(object):
             self.unpack_utilities_file()
 
             self.reformat_label_list()
-
-            self.label_file = "%s/Label.txt"%(self.model_dir)
 
             #Generating rec cropped image
             print("== Generate Rec Cropped Img")
@@ -542,6 +537,10 @@ def data_downloader(s3,file_name_in_bucket,file_name_local,force_download=False)
             print(f"Gagal mendownload {file_name_in_bucket}. Terjadi kesalahan: {e}")  
 
 def fetch_dataset(model_dir,model_id):
+    import boto3
+    #Import s3 bucket
+    from dotenv import load_dotenv
+
     #Fetch dataset from S3 bucket based on list of data in Label.txt for selected model_id
     dotenv_path = os.path.join(os.path.dirname(__file__), '.env')  # Ganti dengan path sesuai lokasi file .env
 
@@ -609,40 +608,36 @@ if __name__ == "__main__":
                             # BKPB : f9e974af-81aa-4e2a-a6d4-8f1583cc7f9a
                         """)
     parser.add_argument("--use_cpu", type=bool, default=False, help="Enable to use cpu instead gpu")
+    parser.add_argument("--skip_preparation", action='store_const', const=True, default=False,help="Use existing data instead of generate new set")
+    parser.add_argument("--annotation_file", type=str, default="Label.txt",help="Annotation File E.g Label.txt")
 
     args = parser.parse_args()
 
     sdk_path = args.sdk_path
 
-    script_path = f"{sdk_path}ocr-engine/paddle-ocr/PaddleOCR/ppstructure/kie"
+    script_path = os.path.join(sdk_path,"ocr-engine/paddle-ocr/PaddleOCR/ppstructure/kie")
     #PaddleFile only for Local
-    model_dir_path = f"{sdk_path}models/"
+    model_dir_path = os.path.join(sdk_path,"models")
     useCPU = args.use_cpu
 
     if args.predict:
         predict(absolute_path_script_folder=script_path,
-                model_dir= f"{model_dir_path}{args.model_id}",
-                sdk_path_dir=f"{sdk_path}PaddleOCR/",
+                model_dir= os.path.join(model_dir_path,args.model_id),
+                sdk_path_dir= os.path.join(sdk_path,"PaddleOCR"),
                 predict_file=args.predict_file,
                 predict_file_output=args.predict_file_output,
                 use_gpu=not useCPU,)
 
     else: #train
         try:
-            #Free GPU before start. Probaby will be removed later
-            #FIXME: Add hyperparams for RE
-            # INVOICE : 7a81e532-af43-4e8c-af67-dcdedb778e96
-            # RECEIPT : a0c1e53d-5bec-4e0d-aaee-71b28936181a
-            # ESTATEMENT : 509b4e5d-d470-4eec-bbdf-59daf50af631
-            # PURCHASE_ORDER : 20bb2d54-661f-440d-9dc8-80b1ed743435
 
             model_id = args.model_id #"509b4e5d-d470-4eec-bbdf-59daf50af631"
             model_dir_only = model_dir_path #"/Users/ariefwijaya/Documents/ARIEFW/Project/PaddleFile/models/"
-            model_dir = f"{model_dir_only}{model_id}"
+            model_dir = os.path.join(model_dir_only,model_id)
 
-            train_fraction = 0.7
+            train_fraction = 0.8
             validation_fraction = 0.2
-            test_fraction = 0.1
+            test_fraction = 0.0
 
             #What model do you train?ALL
             model = args.mode
@@ -653,8 +648,19 @@ if __name__ == "__main__":
             trainer = SribuuOCRTrainer(
                 model_dir = model_dir,
                 trainResume = None,
-                useCPU = useCPU
+                useCPU = useCPU,
+                isPrepared=args.skip_preparation
             )
+            
+            # only to split dataset
+            # ============
+            # trainer.reformat_label_list()
+            # trainer.label_file = os.path.join(trainer.model_dir,args.annotation_file)
+            # #Splitting data set
+            # print("== Splitting dataset")
+            # trainer.split_data(train_fraction, validation_fraction, test_fraction)
+            # exit( "Prepare only")
+            # # =================
 
             if model == "ALL":
                 create_log_optimisation(
@@ -724,7 +730,8 @@ if __name__ == "__main__":
             
             #should be [opt.maximize(init_points=5,n_iter=25)]
             #We limit to 3 iteration,1+2
-            opt.maximize(init_points=1,n_iter=2)
+            # opt.maximize(init_points=1,n_iter=2)
+            opt.maximize(init_points=5,n_iter=25)
             
             delta = time.time() - start_time
 

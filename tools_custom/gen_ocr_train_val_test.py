@@ -3,6 +3,7 @@ import os
 import shutil
 import random
 import argparse
+from tqdm import tqdm
 
 
 # 删除划分的训练集、验证集、测试集文件夹，重新创建一个空的文件夹
@@ -17,51 +18,47 @@ def isCreateOrDeleteFolder(path, flag):
     return flagAbsPath
 
 
-def splitTrainVal(args,root, absTrainRootPath, absValRootPath, absTestRootPath, trainTxt, valTxt, testTxt, flag):
+def splitTrainVal(args,trainTxt, valTxt, testTxt, flag):
     # 按照指定的比例划分训练集、验证集、测试集
     #dataAbsPath = os.path.abspath(root)
     #Change to the local folder where model is hosted
-    dataAbsPath = args.model_dir
+    # dataAbsPath = args.model_dir
 
     if flag == "det":
-        labelFilePath = os.path.join(dataAbsPath, args.detLabelFileName)
+        labelFilePath = args.detLabelFileName
     elif flag == "rec":
-        labelFilePath = os.path.join(dataAbsPath, args.recLabelFileName)
-
+        labelFilePath = args.recLabelFileName
+    
     labelFileRead = open(labelFilePath, "r", encoding="UTF-8")
     labelFileContent = labelFileRead.readlines()
     random.shuffle(labelFileContent)
     labelRecordLen = len(labelFileContent)
 
-    for index, labelRecordInfo in enumerate(labelFileContent):
+    for index, labelRecordInfo in tqdm(enumerate(labelFileContent)):
         imageRelativePath = labelRecordInfo.split('\t')[0]
         imageLabel = labelRecordInfo.split('\t')[1]
         imageName = os.path.basename(imageRelativePath)
 
-        if flag == "det":
-            imagePath = os.path.join(dataAbsPath, imageRelativePath)
-        elif flag == "rec":
-            imagePath = os.path.join(dataAbsPath, imageRelativePath)
+        # if flag == "det":
+        #     imagePath = os.path.join(dataAbsPath, imageRelativePath)
+        # elif flag == "rec":
+        #     imagePath = os.path.join(dataAbsPath, imageRelativePath)
         
         # 按预设的比例划分训练集、验证集、测试集
         trainValTestRatio = args.trainValTestRatio.split(":")
         trainRatio = eval(trainValTestRatio[0]) / 10
         valRatio = trainRatio + eval(trainValTestRatio[1]) / 10
         curRatio = index / labelRecordLen
-
+            
         if curRatio < trainRatio:
-            imageCopyPath = os.path.join(absTrainRootPath, imageName)
-            shutil.copy(imagePath, imageCopyPath)
-            trainTxt.write("{}\t{}".format(os.path.basename(imageCopyPath), imageLabel))
+            trainTxt.write("{}\t{}".format(imageName, imageLabel))
         elif curRatio >= trainRatio and curRatio < valRatio:
-            imageCopyPath = os.path.join(absValRootPath, imageName)
-            shutil.copy(imagePath, imageCopyPath)
-            valTxt.write("{}\t{}".format(os.path.basename(imageCopyPath), imageLabel))
+            valTxt.write("{}\t{}".format(imageName, imageLabel))
         else:
-            imageCopyPath = os.path.join(absTestRootPath, imageName)
-            shutil.copy(imagePath, imageCopyPath)
-            testTxt.write("{}\t{}".format(os.path.basename(imageCopyPath), imageLabel))
-
+            testTxt.write("{}\t{}".format(imageName, imageLabel))
+    trainTxt.close()
+    valTxt.close()
+    testTxt.close()
 
 # 删掉存在的文件
 def removeFile(path):
@@ -70,19 +67,16 @@ def removeFile(path):
 
 
 def genDetRecTrainVal(args):
-    detAbsTrainRootPath = isCreateOrDeleteFolder(args.detRootPath, "train")
-    detAbsValRootPath = isCreateOrDeleteFolder(args.detRootPath, "val")
-    detAbsTestRootPath = isCreateOrDeleteFolder(args.detRootPath, "test")
-    recAbsTrainRootPath = isCreateOrDeleteFolder(args.recRootPath, "train")
-    recAbsValRootPath = isCreateOrDeleteFolder(args.recRootPath, "val")
-    recAbsTestRootPath = isCreateOrDeleteFolder(args.recRootPath, "test")
+    os.makedirs(args.detRootPath,exist_ok=True)
+    os.makedirs(args.recRootPath,exist_ok=True)
 
-    removeFile(os.path.join(args.detRootPath, "train.txt"))
-    removeFile(os.path.join(args.detRootPath, "val.txt"))
-    removeFile(os.path.join(args.detRootPath, "test.txt"))
-    removeFile(os.path.join(args.recRootPath, "train.txt"))
-    removeFile(os.path.join(args.recRootPath, "val.txt"))
-    removeFile(os.path.join(args.recRootPath, "test.txt"))
+    if args.overwriteLabelFile:
+        removeFile(os.path.join(args.detRootPath, "train.txt"))
+        removeFile(os.path.join(args.detRootPath, "val.txt"))
+        removeFile(os.path.join(args.detRootPath, "test.txt"))
+        removeFile(os.path.join(args.recRootPath, "train.txt"))
+        removeFile(os.path.join(args.recRootPath, "val.txt"))
+        removeFile(os.path.join(args.recRootPath, "test.txt"))
 
     detTrainTxt = open(os.path.join(args.detRootPath, "train.txt"), "a", encoding="UTF-8")
     detValTxt = open(os.path.join(args.detRootPath, "val.txt"), "a", encoding="UTF-8")
@@ -91,22 +85,10 @@ def genDetRecTrainVal(args):
     recValTxt = open(os.path.join(args.recRootPath, "val.txt"), "a", encoding="UTF-8")
     recTestTxt = open(os.path.join(args.recRootPath, "test.txt"), "a", encoding="UTF-8")
 
-    splitTrainVal(args,args.datasetRootPath, detAbsTrainRootPath, detAbsValRootPath, detAbsTestRootPath, detTrainTxt, detValTxt,
-                  detTestTxt, "det")
+    splitTrainVal(args, detTrainTxt, detValTxt,detTestTxt, "det")
     
-    current_directory = args.datasetRootPath
-    
-    if args.datasetRootPath == "":
-        current_directory = os.getcwd()
-
-    for root, dirs, files in os.walk(current_directory):
-        for dir in dirs:
-            if dir == 'crop_img':
-                splitTrainVal(args,root, recAbsTrainRootPath, recAbsValRootPath, recAbsTestRootPath, recTrainTxt, recValTxt,
-                              recTestTxt, "rec")
-            else:
-                continue
-        break
+    if os.path.exists(args.recLabelFileName):
+        splitTrainVal(args,recTrainTxt, recValTxt,recTestTxt, "rec")
 
 
 
@@ -153,6 +135,12 @@ if __name__ == "__main__":
         type=str,
         default="crop_img",
         help="the name of the folder where the cropped recognition dataset is located"
+    )
+
+    parser.add_argument(
+        "--overwriteLabelFile",
+        type=bool, default=False,
+        help="Label file will be overwrite when this argument used"
     )
     args = parser.parse_args()
     genDetRecTrainVal(args)

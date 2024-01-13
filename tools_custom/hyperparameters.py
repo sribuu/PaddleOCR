@@ -9,14 +9,14 @@ class HyperParameters(object):
 
             profiler_options=None,
             
-            use_gpu=False, epoch_num=200, log_smooth_window=10, print_batch_step=10, save_model_dir='model_checkpoint',
-            save_epoch_step=2000, eval_batch_step = [0,19], cal_metric_during_train=False, save_inference_dir='./model_compiled/ser',
-            use_visualdl=False, seed=143, infer_img='./train_data/det/test.txt', infer_mode=False, save_res_path='./output/ser',
+            use_gpu=False, epoch_num=200, log_smooth_window=10, print_batch_step=10, save_model_dir='model_paddle_checkpoint',
+            save_epoch_step=2000, eval_batch_step = [0,19], cal_metric_during_train=False, save_inference_dir='./model_paddle',
+            use_visualdl=False, seed=143, infer_img='./train_data/kie/test.txt', infer_mode=False, save_res_path='./output',
             kie_rec_model_dir=None, kie_det_model_dir=None, 
             
             model_type='kie',algorithm='LayoutXLM', Transform=None, architecture_name='LayoutXLMForSer', pretrained=True, checkpoints=None, mode='vi', num_classes=105, loss_reduction="mean",
             
-            loss_name='VQASerTokenLayoutLMLoss', key='backbone_out', optimizer_name='AdamW',beta1=0.9,beta2=0.999,lr_name="Linear",learning_rate=5e-5, warmup_epoch=2, regularizer_name="L2", regularizer_factor=0.0,
+            loss_name='VQASerTokenLayoutLMLoss', key='backbone_out', optimizer_name='AdamW',beta1=0.9,beta2=0.999,lr_name="Linear",learning_rate=5e-5, warmup_epoch=3, regularizer_name="L2", regularizer_factor=0.0,
 
             postprocess_name='VQASerTokenLayoutLMPostProcess', postprocess_class_path='label-key-list.txt',
 
@@ -37,9 +37,8 @@ class HyperParameters(object):
         self.config["Global"]['print_batch_step'] = print_batch_step
 
         #Configuring the model directory to save
-        self.config["Global"]['save_model_dir'] = "%s/model_checkpoint/%s"%(
-            model_dir,
-            self.global_model.lower()
+        self.config["Global"]['save_model_dir'] = "%s/model_paddle_checkpoint"%(
+            model_dir
         )
 
         self.config["Global"]['save_epoch_step'] = save_epoch_step
@@ -47,15 +46,14 @@ class HyperParameters(object):
         self.config["Global"]['cal_metric_during_train'] = cal_metric_during_train
 
         #Configuring the model directory for inference?
-        self.config["Global"]['save_inference_dir'] = "%s/model_compiled/%s"%(
+        self.config["Global"]['save_inference_dir'] = "%s/model_paddle"%(
             model_dir,
-            self.global_model.lower()
         )
 
         self.config["Global"]['use_visualdl'] = use_visualdl
         self.config["Global"]['seed'] = seed
 
-        self.config["Global"]['infer_img'] = "%s/train_data/det/test.txt"%(
+        self.config["Global"]['infer_img'] = "%s/train_data/kie/test.txt"%(
             model_dir
         )
 
@@ -144,10 +142,10 @@ class HyperParameters(object):
 
         if self.global_model in ["SER","ALL"]:
             #Populate Train key
-            self.config["Train"] = {'dataset': {'name': 'SimpleDataSet', 'data_dir': '%s/train_data/det/train'%(model_dir), 'label_file_list': ['%s/train_data/det/train.txt'%(model_dir)], 'ratio_list': [1.0], 'transforms': [{'DecodeImage': {'img_mode': 'RGB', 'channel_first': False}}, {'VQATokenLabelEncode': {'contains_re': False, 'algorithm': algorithm, 'class_path': '%s/label-key-list.txt'%(model_dir), 'use_textline_bbox_info': True, 'order_method': 'tb-yx'}}, {'VQATokenPad': {'max_seq_len': 512, 'return_attention_mask': True}}, {'VQASerTokenChunk': {'max_seq_len': 512}}, {'Resize': {'size': [224, 224]}}, {'NormalizeImage': {'scale': 1, 'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375], 'order': 'hwc'}}, {'ToCHWImage': None}, {'KeepKeys': {'keep_keys': ['input_ids', 'bbox', 'attention_mask', 'token_type_ids', 'image', 'labels']}}]}, 'loader': {'shuffle': True, 'drop_last': False, 'batch_size_per_card': 4, 'num_workers': 4}}
+            self.config["Train"] = {'dataset': {'name': 'SimpleDataSet', 'data_dir': '%s/dataset'%(model_dir), 'label_file_list': ['%s/train_data/kie/train.txt'%(model_dir)], 'ratio_list': [1.0], 'transforms': [{'DecodeImage': {'img_mode': 'RGB', 'channel_first': False}}, {'VQATokenLabelEncode': {'contains_re': False, 'algorithm': algorithm, 'class_path': '%s/label-key-list.txt'%(model_dir), 'use_textline_bbox_info': True, 'order_method': 'tb-yx'}}, {'VQATokenPad': {'max_seq_len': 512, 'return_attention_mask': True}}, {'VQASerTokenChunk': {'max_seq_len': 512}}, {'Resize': {'size': [224, 224]}}, {'NormalizeImage': {'scale': 1, 'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375], 'order': 'hwc'}}, {'ToCHWImage': None}, {'KeepKeys': {'keep_keys': ['input_ids', 'bbox', 'attention_mask', 'token_type_ids', 'image', 'labels']}}]}, 'loader': {'shuffle': True, 'drop_last': False, 'batch_size_per_card': 8, 'num_workers': 4}}
 
             #Populate Eval key
-            self.config["Eval"] = {'dataset': {'name': 'SimpleDataSet', 'data_dir': '%s/train_data/det/val'%(model_dir), 'label_file_list': ['%s/train_data/det/val.txt'%(model_dir)], 'transforms': [{'DecodeImage': {'img_mode': 'RGB', 'channel_first': False}}, {'VQATokenLabelEncode': {'contains_re': False, 'algorithm': algorithm, 'class_path': '%s/label-key-list.txt'%(model_dir), 'use_textline_bbox_info': True, 'order_method': 'tb-yx'}}, {'VQATokenPad': {'max_seq_len': 512, 'return_attention_mask': True}}, {'VQASerTokenChunk': {'max_seq_len': 512}}, {'Resize': {'size': [224, 224]}}, {'NormalizeImage': {'scale': 1, 'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375], 'order': 'hwc'}}, {'ToCHWImage': None}, {'KeepKeys': {'keep_keys': ['input_ids', 'bbox', 'attention_mask', 'token_type_ids', 'image', 'labels']}}]}, 'loader': {'shuffle': False, 'drop_last': False, 'batch_size_per_card': 4, 'num_workers': 4}}
+            self.config["Eval"] = {'dataset': {'name': 'SimpleDataSet', 'data_dir': '%s/dataset'%(model_dir), 'label_file_list': ['%s/train_data/kie/val.txt'%(model_dir)], 'transforms': [{'DecodeImage': {'img_mode': 'RGB', 'channel_first': False}}, {'VQATokenLabelEncode': {'contains_re': False, 'algorithm': algorithm, 'class_path': '%s/label-key-list.txt'%(model_dir), 'use_textline_bbox_info': True, 'order_method': 'tb-yx'}}, {'VQATokenPad': {'max_seq_len': 512, 'return_attention_mask': True}}, {'VQASerTokenChunk': {'max_seq_len': 512}}, {'Resize': {'size': [224, 224]}}, {'NormalizeImage': {'scale': 1, 'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375], 'order': 'hwc'}}, {'ToCHWImage': None}, {'KeepKeys': {'keep_keys': ['input_ids', 'bbox', 'attention_mask', 'token_type_ids', 'image', 'labels']}}]}, 'loader': {'shuffle': False, 'drop_last': False, 'batch_size_per_card': 8, 'num_workers': 4}}
 
         else: #for RE model
             #Read the entities
@@ -161,10 +159,10 @@ class HyperParameters(object):
                     counter += 1
 
             #Populate Train key
-            self.config["Train"] = {'dataset': {'name': 'SimpleDataSet', 'data_dir': '%s/train_data/det/train'%(model_dir), 'label_file_list': ['%s/train_data/det/train.txt'%(model_dir)], 'ratio_list': [1.0], 'transforms': [{'DecodeImage': {'img_mode': 'RGB', 'channel_first': False}}, {'VQATokenLabelEncode': {'contains_re': True, 'algorithm': algorithm, 'class_path': '%s/label-key-list.txt'%(model_dir), 'use_textline_bbox_info': True, 'order_method': 'tb-yx'}}, {'VQATokenPad': {'max_seq_len': 512, 'return_attention_mask': True}}, {'VQAReTokenRelation':None}, {'VQAReTokenChunk': {'max_seq_len': 512,'entities_labels':entities_labels}}, {'TensorizeEntitiesRelations':None}, {'Resize': {'size': [224, 224]}}, {'NormalizeImage': {'scale': 1, 'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375], 'order': 'hwc'}}, {'ToCHWImage': None}, {'KeepKeys': {'keep_keys': ['input_ids', 'bbox', 'attention_mask', 'token_type_ids', 'entities', 'relations']}}]}, 'loader': {'shuffle': True, 'drop_last': False, 'batch_size_per_card': 8, 'num_workers': 4}}
+            self.config["Train"] = {'dataset': {'name': 'SimpleDataSet', 'data_dir': '%s/dataset'%(model_dir), 'label_file_list': ['%s/train_data/kie/train.txt'%(model_dir)], 'ratio_list': [1.0], 'transforms': [{'DecodeImage': {'img_mode': 'RGB', 'channel_first': False}}, {'VQATokenLabelEncode': {'contains_re': True, 'algorithm': algorithm, 'class_path': '%s/label-key-list.txt'%(model_dir), 'use_textline_bbox_info': True, 'order_method': 'tb-yx'}}, {'VQATokenPad': {'max_seq_len': 512, 'return_attention_mask': True}}, {'VQAReTokenRelation':None}, {'VQAReTokenChunk': {'max_seq_len': 512,'entities_labels':entities_labels}}, {'TensorizeEntitiesRelations':None}, {'Resize': {'size': [224, 224]}}, {'NormalizeImage': {'scale': 1, 'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375], 'order': 'hwc'}}, {'ToCHWImage': None}, {'KeepKeys': {'keep_keys': ['input_ids', 'bbox', 'attention_mask', 'token_type_ids', 'entities', 'relations']}}]}, 'loader': {'shuffle': True, 'drop_last': False, 'batch_size_per_card': 8, 'num_workers': 4}}
 
             #Populate Eval key
-            self.config["Eval"] = {'dataset': {'name': 'SimpleDataSet', 'data_dir': '%s/train_data/det/val'%(model_dir), 'label_file_list': ['%s/train_data/det/val.txt'%(model_dir)], 'transforms': [{'DecodeImage': {'img_mode': 'RGB', 'channel_first': False}}, {'VQATokenLabelEncode': {'contains_re': True, 'algorithm': algorithm, 'class_path': '%s/label-key-list.txt'%(model_dir), 'use_textline_bbox_info': True, 'order_method': 'tb-yx'}}, {'VQATokenPad': {'max_seq_len': 512, 'return_attention_mask': True}}, {'VQAReTokenRelation':None}, {'VQAReTokenChunk': {'max_seq_len': 512,'entities_labels':entities_labels}}, {'TensorizeEntitiesRelations':None}, {'Resize': {'size': [224, 224]}}, {'NormalizeImage': {'scale': 1, 'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375], 'order': 'hwc'}}, {'ToCHWImage': None}, {'KeepKeys': {'keep_keys': ['input_ids', 'bbox', 'attention_mask', 'token_type_ids', 'entities', 'relations']}}]}, 'loader': {'shuffle': False, 'drop_last': False, 'batch_size_per_card': 8, 'num_workers': 4}}
+            self.config["Eval"] = {'dataset': {'name': 'SimpleDataSet', 'data_dir': '%s/dataset'%(model_dir), 'label_file_list': ['%s/train_data/kie/val.txt'%(model_dir)], 'transforms': [{'DecodeImage': {'img_mode': 'RGB', 'channel_first': False}}, {'VQATokenLabelEncode': {'contains_re': True, 'algorithm': algorithm, 'class_path': '%s/label-key-list.txt'%(model_dir), 'use_textline_bbox_info': True, 'order_method': 'tb-yx'}}, {'VQATokenPad': {'max_seq_len': 512, 'return_attention_mask': True}}, {'VQAReTokenRelation':None}, {'VQAReTokenChunk': {'max_seq_len': 512,'entities_labels':entities_labels}}, {'TensorizeEntitiesRelations':None}, {'Resize': {'size': [224, 224]}}, {'NormalizeImage': {'scale': 1, 'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375], 'order': 'hwc'}}, {'ToCHWImage': None}, {'KeepKeys': {'keep_keys': ['input_ids', 'bbox', 'attention_mask', 'token_type_ids', 'entities', 'relations']}}]}, 'loader': {'shuffle': False, 'drop_last': False, 'batch_size_per_card': 8, 'num_workers': 4}}
 
 
     def load_config(self):

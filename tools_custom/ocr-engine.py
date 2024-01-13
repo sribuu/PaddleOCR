@@ -291,7 +291,7 @@ class SribuuOCRTrainer(object):
             set_seed(seed)
 
             now = time.time()
-            best_metric = train.main(config, device, logger, vdl_writer)
+            best_metric = train.main(config, device, logger, vdl_writer,seed)
 
             print(
                 "==================================== Training %s model took %.2f seconds. Metric = %s with score %.4f"%(

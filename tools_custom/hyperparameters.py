@@ -112,7 +112,9 @@ class HyperParameters(object):
 
         if self.global_model in ["SER", "ALL"]:
             self.config["Global"]["d2s_train_image_shape"]=[3, 224, 224]
+            self.config["Global"]["amp_custom_white_list"]=['scale', 'concat', 'elementwise_add']
             self.config["Loss"]["num_classes"] = num_classes
+            
         elif self.global_model == "RE":
             self.config["Loss"]["reduction"] = loss_reduction
 

@@ -203,12 +203,16 @@ def export_single_model(model,
     return
 
 
-def main(config):
-    #FLAGS = ArgsParser().parse_args()
-    #config = load_config(FLAGS.config)
-    #config = merge_config(config, FLAGS.opt)
-    logger = get_logger()
-    # build post process
+def main(config_param=None):
+    if config_param:
+        config = config_param
+        logger = get_logger()
+    else:
+        FLAGS = ArgsParser().parse_args()
+        config = load_config(FLAGS.config)
+        config = merge_config(config, FLAGS.opt)
+        logger = get_logger()
+        # build post process
 
     post_process_class = build_post_process(config["PostProcess"],
                                             config["Global"])

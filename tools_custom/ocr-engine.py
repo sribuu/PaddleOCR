@@ -476,6 +476,8 @@ def predict(
     predict_ser_script = "%s/predict_kie_token_ser.py"%absolute_path_script_folder
     model_compiled_re = "%s/model_compiled/re"%(model_dir)
     model_compiled_ser = "%s/model_compiled/ser"%(model_dir)
+    if not os.path.exists(model_compiled_ser): #kita ada perubahan structure folder biar lebih general
+        model_compiled_ser = "%s/model_paddle"%(model_dir)
     visual_font = f"{sdk_path_dir}tools_custom/fonts/simfang.ttf"
     
     output_predict_dir = os.path.join(model_dir,"output",os.path.basename(predict_file if (predict_file_output is None) else predict_file_output))

@@ -478,7 +478,7 @@ def predict(
     model_compiled_ser = "%s/model_compiled/ser"%(model_dir)
     if not os.path.exists(model_compiled_ser): #kita ada perubahan structure folder biar lebih general
         model_compiled_ser = "%s/model_paddle"%(model_dir)
-    visual_font = f"{sdk_path_dir}tools_custom/fonts/simfang.ttf"
+    visual_font = os.path.join(sdk_path_dir,"doc/fonts/simfang.ttf")
     
     output_predict_dir = os.path.join(model_dir,"output",os.path.basename(predict_file if (predict_file_output is None) else predict_file_output))
 
@@ -620,7 +620,7 @@ if __name__ == "__main__":
     if args.predict:
         predict(absolute_path_script_folder=script_path,
                 model_dir= os.path.join(model_dir_path,args.model_id),
-                sdk_path_dir= os.path.join(sdk_path,"PaddleOCR"),
+                sdk_path_dir= os.path.join(sdk_path,"ocr-engine/paddle-ocr/PaddleOCR"),
                 predict_file=args.predict_file,
                 predict_file_output=args.predict_file_output,
                 use_gpu=not useCPU,)

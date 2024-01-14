@@ -77,7 +77,6 @@ class HyperParameters(object):
 
         self.config["Global"]["use_visualdl"] = use_visualdl
         self.config["Global"]["seed"] = seed
-
         self.config["Global"]["infer_img"] = os.path.join(model_dir,"train_data/kie/test.txt")
 
         self.config["Global"]["infer_mode"] = infer_mode
@@ -112,6 +111,7 @@ class HyperParameters(object):
             self.config["Loss"]["key"] = "loss"
 
         if self.global_model in ["SER", "ALL"]:
+            self.config["Global"]["d2s_train_image_shape"]=[3, 224, 224]
             self.config["Loss"]["num_classes"] = num_classes
         elif self.global_model == "RE":
             self.config["Loss"]["reduction"] = loss_reduction

@@ -637,7 +637,7 @@ def get_center(model, eval_dataloader, post_process_class):
 
 #Philipe Gunawan changed this. Instead of relying on *.yml file to control the hyperparameters, I use a Python object "flags_"
 def preprocess(is_train=False, flags_= None):
-    if flags_ ==  None:
+    if flags_ is None:
         FLAGS = ArgsParser().parse_args()    
         profiler_options = FLAGS.profiler_options
         config = load_config(FLAGS.config)

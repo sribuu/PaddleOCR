@@ -17,8 +17,8 @@ class HyperParameters(object):
         print_batch_step=10,
         save_model_dir="model_paddle_checkpoint",
         save_epoch_step=2000,
-        eval_batch_step=[0, 19],
-        cal_metric_during_train=False,
+        eval_batch_step=[0, 19], #total_training_data/batch_size_per_card e.g 2616/4=654
+        cal_metric_during_train=True,
         save_inference_dir="./model_paddle",
         use_visualdl=False,
         seed=2022,
@@ -42,10 +42,10 @@ class HyperParameters(object):
         beta1=0.9,
         beta2=0.999,
         lr_name="Linear",
-        learning_rate=5e-5,
-        warmup_epoch=3,
+        learning_rate=0.00005,
+        warmup_epoch=3, #5% from total epoch
         regularizer_name="L2",
-        regularizer_factor=0.0,
+        regularizer_factor=0.00001,
         postprocess_name="VQASerTokenLayoutLMPostProcess",
         postprocess_class_path="label-key-list.txt",
         metric_name="VQASerTokenMetric",
@@ -212,8 +212,8 @@ class HyperParameters(object):
                 "loader": {
                     "shuffle": True,
                     "drop_last": False,
-                    "batch_size_per_card": 4,
-                    "num_workers": 4,
+                    "batch_size_per_card": 8,
+                    "num_workers": 8,
                 },
             }
 
@@ -268,8 +268,8 @@ class HyperParameters(object):
                 "loader": {
                     "shuffle": False,
                     "drop_last": False,
-                    "batch_size_per_card": 4,
-                    "num_workers": 4,
+                    "batch_size_per_card": 8,
+                    "num_workers": 8,
                 },
             }
 
@@ -344,7 +344,7 @@ class HyperParameters(object):
                     "shuffle": True,
                     "drop_last": False,
                     "batch_size_per_card": 8,
-                    "num_workers": 4,
+                    "num_workers": 8,
                 },
             }
 
@@ -407,7 +407,7 @@ class HyperParameters(object):
                     "shuffle": False,
                     "drop_last": False,
                     "batch_size_per_card": 8,
-                    "num_workers": 4,
+                    "num_workers": 8,
                 },
             }
 

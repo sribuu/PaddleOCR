@@ -203,11 +203,17 @@ class SribuuOCRTrainer(object):
             beta2 = hyperparams['beta2'],
             lr_name = hyperparams["lr_name"],
             learning_rate = hyperparams["learning_rate"],
+            warmup_epoch=hyperparams["epoch_num"]*0.05,
             regularizer_name = hyperparams["regularizer_name"],
             regularizer_factor = hyperparams["regularizer_factor"],
             num_classes = hyperparams['num_classes'],
             profiler_options = profiler_options
         )
+
+        with open(hp.config["Train"]["dataset"]["label_file_list"][0], 'r') as fp:
+            trainfile_len = len(fp.readlines())
+            batch_size = hp.config["Train"]["loader"]["batch_size_per_card"]
+            hp.config["Global"]["eval_batch_step"] = [0,int(trainfile_len/batch_size)]
 
         return hp
     
@@ -229,8 +235,6 @@ class SribuuOCRTrainer(object):
         '''
         #What model do you want to train
         self.model = model
-        
-        allocate_gpu_memory()  # Alokasikan memori GPU sebelum pelatihan
         
         print("== TRAINING ==")
 
@@ -434,7 +438,6 @@ class SribuuOCRTrainer(object):
                     self.export(hp)
 
         #Return best_metric for the optimisation's objective function
-        deallocate_gpu_memory()  # Dealokasikan memori GPU setelah pelatihan
 
         return best_metric    
 
@@ -446,14 +449,6 @@ def create_log_optimisation(model_dir, model):
         f.write(
             "beta1,beta2,learning_rate,regularizer_factor,metric\n"
         )
-
-def allocate_gpu_memory():
-    print("Allocating Memory do Nothing...")
-  
-
-def deallocate_gpu_memory():
-    # Setelah membersihkan cache
-    print("Deallocate Memory do Nothing...")
 
 def free_GPU():
     #Free-ing GPU resources
@@ -654,7 +649,6 @@ if __name__ == "__main__":
 
             if args.annotation_file:
                 trainer.label_file = os.path.join(trainer.model_dir,args.annotation_file)
-# 
             
             # only to split dataset
             # ============
@@ -692,7 +686,7 @@ if __name__ == "__main__":
 
                 optimised: beat1, beta2, learning_rate, regularizer_factor
             '''
-            hyperparams["epoch_num"] = 200
+            hyperparams["epoch_num"] = 100
             hyperparams["algorithm"] = "LayoutXLM"
             hyperparams["optimizer_name"] = "AdamW"
 
@@ -706,6 +700,9 @@ if __name__ == "__main__":
             hyperparams["regularizer_name"] = "L2"
             hyperparams["lr_name"] = "Linear"
 
+            ## Reconfigure Some param
+            # trainer
+
             #Instantiate partial obj function, where hyperparams is left off for optimisation routine
             objfunc = functools.partial(
                 trainer.fit, hyperparams = hyperparams, model=model, 
@@ -717,7 +714,7 @@ if __name__ == "__main__":
                 'beta1':(0.8,0.95),
                 'beta2':(0.9,0.95),
                 'learning_rate':(5e-7,5e-4),
-                'regularizer_factor':(0,0.499)
+                'regularizer_factor':(0.00001,0.499)
             }
 
             #Instantiate the optimisation object
@@ -742,9 +739,5 @@ if __name__ == "__main__":
 
             print("Output best metric = %s"%(opt.max))
             
-            # if not useCPU:
-            #     free_GPU()
         except Exception as error:
             print("An exception occurred:", error) 
-            # if not useCPU:
-            #     free_GPU()

@@ -18,7 +18,7 @@ class HyperParameters(object):
         save_model_dir="model_paddle_checkpoint",
         save_epoch_step=2000,
         eval_batch_step=[0, 19], #total_training_data/batch_size_per_card e.g 2616/4=654
-        cal_metric_during_train=True,
+        cal_metric_during_train=False, #should be enabled Later
         save_inference_dir="./model_paddle",
         use_visualdl=False,
         seed=2022,

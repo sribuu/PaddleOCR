@@ -45,7 +45,7 @@ class HyperParameters(object):
         learning_rate=0.00005,
         warmup_epoch=3, #5% from total epoch
         regularizer_name="L2",
-        regularizer_factor=0.00001,
+        regularizer_factor=0.00005,
         postprocess_name="VQASerTokenLayoutLMPostProcess",
         postprocess_class_path="label-key-list.txt",
         metric_name="VQASerTokenMetric",

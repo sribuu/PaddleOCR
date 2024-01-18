@@ -140,7 +140,7 @@ class SribuuOCRTrainer(object):
                             f.write('train_data/ocr_crop/' + img_name + '\t'+label['transcription'].replace('\n','\\n').strip() + '\n')
                     except Exception as e:
                         ques_img.append(key)
-                        print("Can not read image ", e)
+                        print(f"Can not read image {img_path}:", e)
     
     def split_data(self, train_fraction, validation_fraction, test_fraction):
         self.datasetRootPath = self.model_dir
@@ -655,6 +655,7 @@ if __name__ == "__main__":
             # only to split dataset
             # ============
             # trainer.reformat_label_list()
+            # trainer.gen_cropped_img()
             # #Splitting data set
             # print("== Splitting dataset")
             # trainer.split_data(train_fraction, validation_fraction, test_fraction)

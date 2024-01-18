@@ -119,28 +119,31 @@ class SribuuOCRTrainer(object):
         ques_img = []
         #Start populating the self.rec_gt.txt
         with open(self.rec_gt_fn, 'w', encoding='utf-8') as f:
-            with open(self.label_file) as fh:
-                for line in tqdm(fh):
-                    key, annotation = line.split("\t", 1)
+            with tqdm.tqdm(total=os.path.getsize(self.label_file)) as pbar:
+                with open(self.label_file) as fh:
+                    for line in fh:
+                        key, annotation = line.split("\t", 1)
 
-                    #Read the image contained in img_path
-                    try:
-                        img_path = os.path.join(self.model_dir,key)
-                        img = cv2.imread(img_path)
+                        #Read the image contained in img_path
+                        try:
+                            img_path = os.path.join(self.model_dir,key)
+                            img = cv2.imread(img_path)
 
-                        #Read the label
-                        for i, label in enumerate(json.loads(annotation.strip())):
-                            # if label['difficult']:
-                            #     continue
-                            img_crop = get_rotate_crop_image(img, np.array(label['points'], np.float32))
-                            img_name = os.path.splitext(os.path.basename(img_path))[0] + '_crop_' + str(i) + '.jpg'
+                            #Read the label
+                            for i, label in enumerate(json.loads(annotation.strip())):
+                                # if label['difficult']:
+                                #     continue
+                                img_crop = get_rotate_crop_image(img, np.array(label['points'], np.float32))
+                                img_name = os.path.splitext(os.path.basename(img_path))[0] + '_crop_' + str(i) + '.jpg'
 
-                            #Writing the cropped images to self.crop_img_dir
-                            cv2.imwrite(self.crop_img_dir + img_name, img_crop)
-                            f.write('train_data/ocr_crop/' + img_name + '\t'+label['transcription'].replace('\n','\\n').strip() + '\n')
-                    except Exception as e:
-                        ques_img.append(key)
-                        print(f"Can not read image {img_path}:", e)
+                                #Writing the cropped images to self.crop_img_dir
+                                cv2.imwrite(self.crop_img_dir + img_name, img_crop)
+                                f.write('train_data/ocr_crop/' + img_name + '\t'+label['transcription'].replace('\n','\\n').strip() + '\n')
+                        except Exception as e:
+                            ques_img.append(key)
+                            print(f"Can not read image {img_path}:", e)
+
+                        pbar.update(len(line))
     
     def split_data(self, train_fraction, validation_fraction, test_fraction):
         self.datasetRootPath = self.model_dir
@@ -590,6 +593,7 @@ def fetch_dataset(model_dir,model_id):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--predict", action='store_const', const=True, default=False,help="Use this to do prediction")
+    parser.add_argument("--preparation", action='store_const', const=True, default=False,help="Use this when to do preparation only")
     parser.add_argument("--train", action='store_const', const=True, default=False,help="Use this to do training")
     parser.add_argument("--mode",choices=["ALL","SER","RE"],default="SER", help="ALL=SER+RE ,SER, RE")
     parser.add_argument("--predict_file", type=str, help="Absolute path for Predict File")
@@ -651,16 +655,19 @@ if __name__ == "__main__":
 
             if args.annotation_file:
                 trainer.label_file = os.path.join(trainer.model_dir,args.annotation_file)
+
             
-            # only to split dataset
-            # ============
-            # trainer.reformat_label_list()
-            # trainer.gen_cropped_img()
-            # #Splitting data set
-            # print("== Splitting dataset")
-            # trainer.split_data(train_fraction, validation_fraction, test_fraction)
-            # exit( "Prepare only")
-            # # =================
+            if args.preparation:
+                # only to split dataset
+                # ============
+                trainer.reformat_label_list()
+                print("== Crop Image")
+                trainer.gen_cropped_img()
+                #Splitting data set
+                print("== Splitting dataset")
+                trainer.split_data(train_fraction, validation_fraction, test_fraction)
+                exit( "Prepare only")
+                # # =================
 
             if model == "ALL":
                 create_log_optimisation(
